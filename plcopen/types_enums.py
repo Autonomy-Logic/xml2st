@@ -4,9 +4,6 @@
 # See COPYING file for copyrights details.
 
 
-from util.TranslationCatalogs import NoTranslate
-_ = NoTranslate
-
 ITEMS_EDITABLE = [
     ITEM_PROJECT,
     ITEM_POU,
@@ -72,9 +69,9 @@ LOCATIONS_ITEMS = [LOCATION_CONFNODE,
                    LOCATION_VAR_OUTPUT,
                    LOCATION_VAR_MEMORY] = list(range(6))
 
-UNEDITABLE_NAMES = [_("User-defined POUs"), _("Functions"), _("Function Blocks"),
-                    _("Programs"), _("Data Types"), _("Transitions"), _("Actions"),
-                    _("Configurations"), _("Resources"), _("Properties")]
+UNEDITABLE_NAMES = ["User-defined POUs", "Functions", "Function Blocks",
+                    "Programs", "Data Types", "Transitions", "Actions",
+                    "Configurations", "Resources", "Properties"]
 
 [USER_DEFINED_POUS, FUNCTIONS, FUNCTION_BLOCKS, PROGRAMS,
  DATA_TYPES, TRANSITIONS, ACTIONS, CONFIGURATIONS,
@@ -127,7 +124,3 @@ def GetElementType(tagname):
         "C": ITEM_CONFIGURATION,
         "R": ITEM_RESOURCE
     }[words[0]]
-
-
-# remove gettext override
-del _

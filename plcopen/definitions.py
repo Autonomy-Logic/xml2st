@@ -27,13 +27,7 @@
 
 from os.path import join
 import util.paths as paths
-from util.TranslationCatalogs import NoTranslate
 sd = paths.AbsDir(__file__)
-
-# Override gettext _ in this module
-# since we just want string to be added to dictionnary
-# but translation should happen here
-_ = NoTranslate
 
 LANGUAGES = ["IL", "ST", "FBD", "LD", "SFC"]
 
@@ -47,8 +41,16 @@ LOCATIONDATATYPES = {"X": ["BOOL"],
 #                        Function Block Types definitions
 # -------------------------------------------------------------------------------
 
-StdTC6Libs = [(_("Standard function blocks"),   join(sd, "Standard_Function_Blocks.xml")),
-              (_("Additional function blocks"), join(sd, "Additional_Function_Blocks.xml"))]
+StdTC6Libs = [("Standard function blocks",   join(sd, "Standard_Function_Blocks.xml")),
+              ("Additional function blocks", join(sd, "Additional_Function_Blocks.xml")),
+              ("Arduino", join(sd, "Arduino_Function_Blocks.xml")),
+              ("Microver", join(sd, "CAN_Function_Blocks.xml")),
+              ("Communication", join(sd, "Communication_Blocks.xml")),
+              ("P1AM Modules", join(sd, "P1AM.xml")),
+              ("MQTT", join(sd, "MQTT.xml")),
+              ("Sequent Microsystems Modules", join(sd, "SM_Cards.xml")),
+              ("Jaguar", join(sd, "Jaguar.xml")),
+              ("SL-RP4", join(sd, "SL-RP4.xml"))]
 
 StdFuncsCSV = join(sd, "iec_std.csv")
 
@@ -167,6 +169,3 @@ ANY_TO_ANY_FILTERS = {
         (("ULINT",), ("LWORD",))
     ]
 }
-
-# remove gettext override
-del _
