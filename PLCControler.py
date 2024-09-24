@@ -567,7 +567,7 @@ class PLCControler(object):
         except Exception:
             error = ""
         if error is not None:
-            return _("Couldn't paste non-POU object.")
+            return "Couldn't paste non-POU object."
 
         name = new_pou.getname()
 
@@ -591,7 +591,7 @@ class PLCControler(object):
             # programs cannot be pasted as functions or function blocks
             if orig_type == 'functionBlock' and pou_type == 'function' or \
                orig_type == 'program' and pou_type in ['function', 'functionBlock']:
-                msg = _('''{a1} "{a2}" can't be pasted as a {a3}.''').format(a1=orig_type, a2=name, a3=pou_type)
+                msg = '''{a1} "{a2}" can't be pasted as a {a3}.'''.format(a1=orig_type, a2=name, a3=pou_type)
                 return msg
 
             new_pou.setpouType(pou_type)
@@ -1917,7 +1917,7 @@ class PLCControler(object):
             except Exception:
                 instances, error = [], ""
             if error is not None or len(instances) == 0:
-                return _("Invalid plcopen element(s)!!!")
+                return "Invalid plcopen element(s)!!!"
 
             exclude = {}
             for instance in instances:
@@ -1929,7 +1929,7 @@ class PLCControler(object):
                     blockname = instance.getinstanceName()
                     if blocktype_infos["type"] != "function" and blockname is not None:
                         if element_type == "function":
-                            return _("FunctionBlock \"%s\" can't be pasted in a Function!!!") % blocktype
+                            return "FunctionBlock \"%s\" can't be pasted in a Function!!!" % blocktype
                         blockname = self.GenerateNewName(tagname,
                                                          blockname,
                                                          "%s%%d" % blocktype,
@@ -2740,7 +2740,7 @@ class PLCControler(object):
     def OpenXMLFile(self, filepath):
         self.Project, error = LoadProject(filepath)
         if self.Project is None:
-            return _("Project file syntax error:\n\n") + error
+            return "Project file syntax error:\n\n" + error
         self.SetFilePath(filepath)
         self.CreateProjectBuffer(True)
         self.ProgramChunks = []
