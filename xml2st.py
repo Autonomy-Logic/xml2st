@@ -21,7 +21,7 @@ def main():
     print("Compiling file {a1}".format(a1=args.xml_file))
 
     # Extract and print the file name
-    file_name = os.path.basename(args.xml_file)
+    file_name = os.path.abspath(args.xml_file)
 
     controler = PLCControler()
     result = controler.OpenXMLFile(file_name)
@@ -48,7 +48,10 @@ def main():
     warnings = []
     ProgramChunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings)
     program_text = "".join([item[0] for item in ProgramChunks])
-    with open ("program.st", "w") as program_file:
+
+    # Construct a path to the ST program file, it is the same as the XML file, but with a .st extension
+    program_file_path = file_name.replace("plc.xml", "program.st")
+    with open (program_file_path, "w") as program_file:
         program_file.write(program_text)
     print("Stage 1 compilation finished successfully")
         
