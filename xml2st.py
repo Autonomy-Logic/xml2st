@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import plcopen.plcopen as plcopen
 import PLCGenerator
 from PLCControler import PLCControler
@@ -21,7 +22,7 @@ def main():
     print("Compiling file {a1}".format(a1=args.xml_file))
 
     # Extract and print the file name
-    file_name = os.path.basename(args.xml_file)
+    file_name = os.path.abspath(args.xml_file)
 
     controler = PLCControler()
     result = controler.OpenXMLFile(file_name)
@@ -46,11 +47,18 @@ def main():
     project = project_tree[0]
     errors = []
     warnings = []
-    ProgramChunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings)
-    program_text = "".join([item[0] for item in ProgramChunks])
-    with open ("program.st", "w") as program_file:
-        program_file.write(program_text)
-    print("Stage 1 compilation finished successfully")
+    try:
+        ProgramChunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings)
+        program_text = "".join([item[0] for item in ProgramChunks])
+
+        # Construct a path to the ST program file, it is the same as the XML file, but with a .st extension
+        program_file_path = file_name.replace("plc.xml", "program.st")
+        with open (program_file_path, "w") as program_file:
+            program_file.write(program_text)
+        print("Stage 1 compilation finished successfully")
+    except Exception as e:
+        print("Error compiling project: " + str(e), file=sys.stderr)
+        sys.exit(1)
         
 
 if __name__ == '__main__':
