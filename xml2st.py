@@ -58,6 +58,7 @@ def main():
         print("Stage 1 compilation finished successfully")
     except Exception as e:
         print("Error compiling project: " + str(e), file=sys.stderr)
+        sys.exit(1)
         
 
 if __name__ == '__main__':
