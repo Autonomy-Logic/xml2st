@@ -23,7 +23,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          pip3 install lxml
+          pip3 install pyinstaller
 
       - name: Build with PyInstaller
         run: pyinstaller xml2st.py --add-data plcopen:plcopen
