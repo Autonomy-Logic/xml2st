@@ -6,24 +6,25 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-    - name: Check out repository code
-      uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install lxml
+          pip install pyinstaller
 
-    - name: Build with PyInstaller
-      run: pyinstaller xml2st.py --add-data plcopen:plcopen
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py --add-data plcopen:plcopen
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-executable
-        path: dist/xml2st
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executable
+          path: dist/xml2st
