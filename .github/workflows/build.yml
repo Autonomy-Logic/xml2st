@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  build-darwin:
-    runs-on: macos-latest
+  build-darwin-arm:
+    runs-on: macos-15
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -32,11 +32,37 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-executable
+          name: darwin-arm-executable
+          path: dist/xml2st
+
+  build-darwin-intel:
+    runs-on: macos-13
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install lxml
+          pip3 install pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py --add-data plcopen:plcopen
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: darwin-intel-executable
           path: dist/xml2st
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -67,7 +93,7 @@ jobs:
           path: dist/xml2st
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
