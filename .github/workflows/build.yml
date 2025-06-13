@@ -1,6 +1,12 @@
 name: Build Python Executable
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-darwin:
@@ -38,7 +44,6 @@ jobs:
       - name: Set up linux environment
         run: |
           sudo apt-get update
-          sudo apt-get upgrade -y
           sudo apt-get install -y python3 python3-pip python3-venv binutils
 
       - name: Set up Python
