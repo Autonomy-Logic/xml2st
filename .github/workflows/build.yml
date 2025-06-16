@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  CFLAGS: -O0
+
 jobs:
   build-darwin-arm:
     runs-on: macos-15
@@ -137,7 +140,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          CFLAGS="-O0" pip install lxml==5.0.0
+          pip install lxml==5.0.0
           pip install pyinstaller
 
       - name: Build with PyInstaller
