@@ -19,13 +19,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        run: brew install python@3.13
+        run: brew reinstall python@3.13
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          pip3 install lxml
-          pip3 install pyinstaller
+          python3 -m pip install --upgrade pip --user --break-system-packages
+          pip3 install lxml --user --break-system-packages
+          pip3 install pyinstaller --user --break-system-packages
 
       - name: Build with PyInstaller
         run: pyinstaller xml2st.py -F --add-data plcopen:plcopen
@@ -43,13 +43,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        run: brew install python@3.13
+        run: brew reinstall python@3.13
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          pip3 install lxml
-          pip3 install pyinstaller
+          python3 -m pip install --upgrade pip --user --break-system-packages
+          pip3 install lxml --user --break-system-packages
+          pip3 install pyinstaller --user --break-system-packages
 
       - name: Build with PyInstaller
         run: pyinstaller xml2st.py -F --add-data plcopen:plcopen
