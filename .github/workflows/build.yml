@@ -23,8 +23,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip --user --break-system-packages
-          pip3 install lxml --user --break-system-packages
+          python3 -m pip install --upgrade pip --user --break-system-packages \
+          pip3 install lxml --user --break-system-packages \
           pip3 install pyinstaller --user --break-system-packages
 
       - name: Build with PyInstaller
@@ -47,8 +47,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip --user --break-system-packages
-          pip3 install lxml --user --break-system-packages
+          python3 -m pip install --upgrade pip --user --break-system-packages \
+          pip3 install lxml --user --break-system-packages \
           pip3 install pyinstaller --user --break-system-packages
 
       - name: Build with PyInstaller
