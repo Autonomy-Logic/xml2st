@@ -1,1 +1,2 @@
 lxml==4.9.2
+pyinstaller==6.14.1
