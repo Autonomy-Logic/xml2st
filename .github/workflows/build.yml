@@ -30,7 +30,7 @@ jobs:
           pip3 install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller xml2st.py -F --add-data plcopen:plcopen
+        run: pyinstaller xml2st.py --add-data plcopen:plcopen
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -56,7 +56,7 @@ jobs:
           pip3 install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller xml2st.py -F --add-data plcopen:plcopen
+        run: pyinstaller xml2st.py --add-data plcopen:plcopen
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
