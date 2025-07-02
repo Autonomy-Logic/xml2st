@@ -109,10 +109,11 @@ class PLCGenException(Exception):
 class ProgramGenerator(object):
 
     # Create a new PCL program generator
-    def __init__(self, controler, project, errors, warnings):
+    def __init__(self, controler, project, errors, warnings, debug_mode=False):
         # Keep reference of the controler and project
         self.Controler = controler
         self.Project = project
+        self.DebugMode = debug_mode  # Store the flag
         # Reset the internal variables used to generate PLC programs
         self.Program = []
         self.DatatypeComputed = {}
@@ -256,8 +257,10 @@ class ProgramGenerator(object):
             pou_type = pou.getpouType()
             # Verify that POU type exists
             if pou_type in pouTypeNames:
-                # Create a POU program generator
-                pou_program = PouProgramGenerator(self, pou.getname(), pouTypeNames[pou_type], self.Errors, self.Warnings)
+                # Create a POU program generator, passing the debug mode flag
+                pou_program = PouProgramGenerator(
+                    self, pou.getname(), pouTypeNames[pou_type], 
+                    self.Errors, self.Warnings, debug_mode=self.DebugMode)
                 program = pou_program.GenerateProgram(pou)
                 self.Program += program
             else:
@@ -524,11 +527,12 @@ ActionObjClass = PLCOpenParser.GetElementClass("action", "actions")
 class PouProgramGenerator(object):
 
     # Create a new POU program generator
-    def __init__(self, parent, name, type, errors, warnings):
+    def __init__(self, parent, name, type, errors, warnings, debug_mode=False):
         # Keep Reference to the parent generator
         self.ParentGenerator = parent
         self.Name = name
         self.Type = type
+        self.DebugMode = debug_mode # Store the flag
         self.TagName = ComputePouName(name)
         self.CurrentIndent = "  "
         self.ReturnType = None
@@ -1735,6 +1739,8 @@ class PouProgramGenerator(object):
             program += [(" : ", ()),
                         (self.ReturnType, (self.TagName, "return"))]
         program += [("\n", ())]
+        
+        # This part that generates VAR_INPUT, VAR_OUTPUT etc. remains the same
         if len(self.Interface) == 0:
             raise PLCGenException("No variable defined in \"%s\" POU" % self.Name)
         if len(self.Program) == 0:
@@ -1763,14 +1769,41 @@ class PouProgramGenerator(object):
                 program += [(";\n", ())]
                 var_number += 1
             program += [("  END_VAR\n", ())]
+        
+        # ==========================================================================
+        # Add the debug variables block if debug mode is enabled
+        if self.DebugMode:
+            debug_vars = self.ParentGenerator.Controler.DebugVariables
+            if debug_vars:
+                program += [("  VAR (* Debugging Variables *)\n", ())]
+                for dbg_var_name in debug_vars:
+                    # Assuming debug variables are BOOL type. This can be changed
+                    # if the CSV provides type information.
+                    program += [("    ", ()),
+                                (dbg_var_name, ()),
+                                (" : BOOL; (* Debug variable from CSV *)\n", ())]
+                program += [("  END_VAR\n", ())]
+        # ==========================================================================
+
         program += [("\n", ())]
+        
+        # ==========================================================================
+        # Add debug function calls at the start of the program body
+        if self.DebugMode:
+            # This is a placeholder for the actual debug function call.
+            # The name 'DBG' and its parameters would depend on the target's debug library.
+            program += [(self.CurrentIndent, ()), 
+                        ("(* DBG_CALL_PLACEHOLDER; *)\n", ())]
+        # ==========================================================================
+
         program += self.Program
         program += [("END_%s\n\n" % self.Type, ())]
         return program
 
 
-def GenerateCurrentProgram(controler, project, errors, warnings, **kwargs):
-    generator = ProgramGenerator(controler, project, errors, warnings)
+def GenerateCurrentProgram(controler, project, errors, warnings, debug=False, **kwargs):
+    # Pass the new 'debug' flag to the ProgramGenerator constructor
+    generator = ProgramGenerator(controler, project, errors, warnings, debug_mode=debug)
     if hasattr(controler, "logger"):
         def log(txt):
             controler.logger.write("    "+txt+"\n")
@@ -1778,5 +1811,5 @@ def GenerateCurrentProgram(controler, project, errors, warnings, **kwargs):
         def log(txt):
             pass
 
-    generator.GenerateProgram(log,**kwargs)
+    generator.GenerateProgram(log, **kwargs)
     return generator.GetGeneratedProgram()
