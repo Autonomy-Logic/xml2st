@@ -247,6 +247,7 @@ class ProgramGenerator(object):
 
     # Generate a POU from its name
     def GeneratePouProgram(self, pou_name):
+<<<<<<< HEAD
             # Verify that POU hasn't been generated yet
             if not self.PouComputed.get(pou_name, True):
                 # ... (código existente) ...
@@ -258,6 +259,9 @@ class ProgramGenerator(object):
                         self.Errors, self.Warnings, debug_mode=self.DebugMode)
                     program = pou_program.GenerateProgram(pou)
                     self.Program += program
+=======
+
+>>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
             else:
                 raise PLCGenException("Undefined pou type \"%s\"" % pou_type)
 
@@ -1765,6 +1769,7 @@ class PouProgramGenerator(object):
                 var_number += 1
             program += [("  END_VAR\n", ())]
         
+<<<<<<< HEAD
         # Conditionally add debug variables and the debug function call
         if self.DebugMode:
             # --- 1. Add Debug Variables from the CSV file ---
@@ -1784,7 +1789,19 @@ class PouProgramGenerator(object):
                 program += [(self.CurrentIndent, ()),
                             (f"{debug_call_string}\n", ())]
         
+=======
+>>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
         program += [("\n", ())]
+        
+        # ==========================================================================
+        # Add debug function calls at the start of the program body
+        if self.DebugMode:
+            # This is a placeholder for the actual debug function call.
+            # The name 'DBG' and its parameters would depend on the target's debug library.
+            program += [(self.CurrentIndent, ()), 
+                        ("(* DBG_CALL_PLACEHOLDER; *)\n", ())]
+        # ==========================================================================
+
         program += self.Program
         program += [("END_%s\n\n" % self.Type, ())]
         return program

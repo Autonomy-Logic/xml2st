@@ -8,17 +8,9 @@ from PLCControler import PLCControler
 import PLCGenerator
 
 def main():
-    # 1. Updated Argument Parser to accept XML and CSV files
-    parser = argparse.ArgumentParser(
-        description='Process a PLCopen XML file and a debug CSV to generate Structured Text (ST) programs.')
-    parser.add_argument('xml_file', type=str, help='The path to the PLCopen XML file')
-    parser.add_argument('csv_file', type=str, help='The path to the debug variables CSV file (format: name,type)')
-    parser.add_argument(
-        '--debug-call', 
-        type=str, 
-        help='The exact debug function call to inject (e.g., "DBG(TRUE);").',
-        default=""  # Default to an empty string if not provided
-    )
+    parser = argparse.ArgumentParser(description='Process a PLCopen XML file and transpiles it into a Structured Text (ST) program.')
+    parser.add_argument('xml_file', type=str, help='The path to the XML file')
+
     args = parser.parse_args()
 
     # --- File Validation ---
@@ -28,24 +20,14 @@ def main():
     if not args.xml_file.lower().endswith('.xml'):
         print(f"Error: The file '{args.xml_file}' is not an XML file.")
         return
-    if not os.path.isfile(args.csv_file):
-        print(f"Error: The file '{args.csv_file}' does not exist.")
-        return
-
-    print(f"Processing file: {args.xml_file}")
-    print(f"Using debug variables from: {args.csv_file}")
-    if args.debug_call:
-        print(f"Using debug call: {args.debug_call}")
     
+    print("Compiling file {a1}".format(a1=args.xml_file))
+
+    # Extract and print the file name
     file_name = os.path.abspath(args.xml_file)
 
     # --- Controller Initialization and Data Loading ---
     controler = PLCControler()
-
-    # Pass the debug call string to the controller +++
-    controler.DebugCallString = args.debug_call
-    
-    # Load XML Project
     result = controler.OpenXMLFile(file_name)
     if result is not None and isinstance(result, str) and "error" in result.lower():
         print(result)
