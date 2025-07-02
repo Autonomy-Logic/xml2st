@@ -12,7 +12,13 @@ def main():
     parser = argparse.ArgumentParser(
         description='Process a PLCopen XML file and a debug CSV to generate Structured Text (ST) programs.')
     parser.add_argument('xml_file', type=str, help='The path to the PLCopen XML file')
-    parser.add_argument('csv_file', type=str, help='The path to the debug variables CSV file')
+    parser.add_argument('csv_file', type=str, help='The path to the debug variables CSV file (format: name,type)')
+    parser.add_argument(
+        '--debug-call', 
+        type=str, 
+        help='The exact debug function call to inject (e.g., "DBG(TRUE);").',
+        default=""  # Default to an empty string if not provided
+    )
     args = parser.parse_args()
 
     # --- File Validation ---
@@ -28,11 +34,16 @@ def main():
 
     print(f"Processing file: {args.xml_file}")
     print(f"Using debug variables from: {args.csv_file}")
+    if args.debug_call:
+        print(f"Using debug call: {args.debug_call}")
     
     file_name = os.path.abspath(args.xml_file)
 
     # --- Controller Initialization and Data Loading ---
     controler = PLCControler()
+
+    # Pass the debug call string to the controller +++
+    controler.DebugCallString = args.debug_call
     
     # Load XML Project
     result = controler.OpenXMLFile(file_name)

@@ -247,22 +247,17 @@ class ProgramGenerator(object):
 
     # Generate a POU from its name
     def GeneratePouProgram(self, pou_name):
-        # Verify that POU hasn't been generated yet
-        if not self.PouComputed.get(pou_name, True):
-            # If not mark POU as computed
-            self.PouComputed[pou_name] = True
-
-            # Getting POU model from project
-            pou = self.Project.getpou(pou_name)
-            pou_type = pou.getpouType()
-            # Verify that POU type exists
-            if pou_type in pouTypeNames:
-                # Create a POU program generator, passing the debug mode flag
-                pou_program = PouProgramGenerator(
-                    self, pou.getname(), pouTypeNames[pou_type], 
-                    self.Errors, self.Warnings, debug_mode=self.DebugMode)
-                program = pou_program.GenerateProgram(pou)
-                self.Program += program
+            # Verify that POU hasn't been generated yet
+            if not self.PouComputed.get(pou_name, True):
+                # ... (código existente) ...
+                if pou_type in pouTypeNames:
+                    # Create a POU program generator
+                    # +++ MODIFIED: Pass debug_mode down to PouProgramGenerator +++
+                    pou_program = PouProgramGenerator(
+                        self, pou.getname(), pouTypeNames[pou_type], 
+                        self.Errors, self.Warnings, debug_mode=self.DebugMode)
+                    program = pou_program.GenerateProgram(pou)
+                    self.Program += program
             else:
                 raise PLCGenException("Undefined pou type \"%s\"" % pou_type)
 
@@ -1770,32 +1765,26 @@ class PouProgramGenerator(object):
                 var_number += 1
             program += [("  END_VAR\n", ())]
         
-        # ==========================================================================
-        # Add the debug variables block if debug mode is enabled
+        # Conditionally add debug variables and the debug function call
         if self.DebugMode:
+            # --- 1. Add Debug Variables from the CSV file ---
             debug_vars = self.ParentGenerator.Controler.DebugVariables
             if debug_vars:
-                program += [("  VAR (* Debugging Variables *)\n", ())]
-                for dbg_var_name in debug_vars:
-                    # Assuming debug variables are BOOL type. This can be changed
-                    # if the CSV provides type information.
+                program += [("  VAR (* -- Debugging Variables -- *)\n", ())]
+                for dbg_var_name, dbg_var_type in debug_vars:
                     program += [("    ", ()),
                                 (dbg_var_name, ()),
-                                (" : BOOL; (* Debug variable from CSV *)\n", ())]
+                                (f" : {dbg_var_type}; (* Debug variable from CSV *)\n", ())]
                 program += [("  END_VAR\n", ())]
-        # ==========================================================================
 
-        program += [("\n", ())]
+            # --- 2. Add the configurable Debug Function Call ---
+            debug_call_string = getattr(self.ParentGenerator.Controler, 'DebugCallString', None)
+            if debug_call_string:
+                program += [("\n", ())]
+                program += [(self.CurrentIndent, ()),
+                            (f"{debug_call_string}\n", ())]
         
-        # ==========================================================================
-        # Add debug function calls at the start of the program body
-        if self.DebugMode:
-            # This is a placeholder for the actual debug function call.
-            # The name 'DBG' and its parameters would depend on the target's debug library.
-            program += [(self.CurrentIndent, ()), 
-                        ("(* DBG_CALL_PLACEHOLDER; *)\n", ())]
-        # ==========================================================================
-
+        program += [("\n", ())]
         program += self.Program
         program += [("END_%s\n\n" % self.Type, ())]
         return program
