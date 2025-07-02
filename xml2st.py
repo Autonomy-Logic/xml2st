@@ -1,65 +1,98 @@
+# xml2st.py
+
 import argparse
 import os
 import sys
-import plcopen.plcopen as plcopen
-import PLCGenerator
+# Make sure to import the necessary modules
 from PLCControler import PLCControler
+import PLCGenerator
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a PLCopen XML file and transpiles it into a Structured Text (ST) program.')
-    parser.add_argument('xml_file', type=str, help='The path to the XML file')
-
+    # 1. Updated Argument Parser to accept XML and CSV files
+    parser = argparse.ArgumentParser(
+        description='Process a PLCopen XML file and a debug CSV to generate Structured Text (ST) programs.')
+    parser.add_argument('xml_file', type=str, help='The path to the PLCopen XML file')
+    parser.add_argument('csv_file', type=str, help='The path to the debug variables CSV file')
     args = parser.parse_args()
 
+    # --- File Validation ---
     if not os.path.isfile(args.xml_file):
         print(f"Error: The file '{args.xml_file}' does not exist.")
         return
-
     if not args.xml_file.lower().endswith('.xml'):
         print(f"Error: The file '{args.xml_file}' is not an XML file.")
         return
-    
-    print("Compiling file {a1}".format(a1=args.xml_file))
+    if not os.path.isfile(args.csv_file):
+        print(f"Error: The file '{args.csv_file}' does not exist.")
+        return
 
-    # Extract and print the file name
+    print(f"Processing file: {args.xml_file}")
+    print(f"Using debug variables from: {args.csv_file}")
+    
     file_name = os.path.abspath(args.xml_file)
 
+    # --- Controller Initialization and Data Loading ---
     controler = PLCControler()
-    result = controler.OpenXMLFile(file_name)
-    if result is not None:
-        if isinstance(result, (tuple, list)) and len(result) == 2:
-            (num, line) = result
-            print("PLC syntax error at line {a1}:\n{a2}".format(a1=num, a2=line))
-            return
-        elif isinstance(result, str):
-            print(result)
-            return
-        else:
-            print("Unknown error! Exiting...")
-            return
     
-    project_tree = plcopen.LoadProject(file_name)
-
-    if project_tree == None or len(project_tree) < 2:
-        print(f"Error: Failed to load XML project file.")
+    # Load XML Project
+    result = controler.OpenXMLFile(file_name)
+    if result is not None and isinstance(result, str) and "error" in result.lower():
+        print(result)
         return
     
-    project = project_tree[0]
+    # 2. Load the new CSV data into the controller
+    controler.LoadDebugCSV(args.csv_file)
+    
+    project = controler.GetProject()
+    if project is None:
+        print("Error: Failed to load project from XML.")
+        return
+
     errors = []
     warnings = []
-    try:
-        ProgramChunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings)
-        program_text = "".join([item[0] for item in ProgramChunks])
 
-        # Construct a path to the ST program file, it is the same as the XML file, but with a .st extension
-        program_file_path = file_name.replace("plc.xml", "program.st")
-        with open (program_file_path, "w") as program_file:
-            program_file.write(program_text)
-        print("Stage 1 compilation finished successfully")
+    # 4. --- Generate the DEBUG version of the program ---
+    try:
+        print("\nGenerating program with debug...")
+        # Call GenerateCurrentProgram with debug=True
+        debug_chunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings, debug=True)
+        debug_program_text = "".join([item[0] for item in debug_chunks])
+
+        debug_file_path = file_name.replace(".xml", "_debug.st")
+        with open(debug_file_path, "w", encoding='utf-8') as program_file:
+            program_file.write(debug_program_text)
+        print(f"Successfully generated debug program: {debug_file_path}")
+        for warning in warnings:
+            print(f"Warning: {warning}")
+
     except Exception as e:
-        print("Error compiling project: " + str(e), file=sys.stderr)
+        print(f"Error generating debug project: {e}", file=sys.stderr)
+        for error in errors:
+            print(f"Details: {error}", file=sys.stderr)
+
+    # --- Generate the NORMAL (production) version of the program ---
+    # Reset errors and warnings for the second run
+    errors.clear()
+    warnings.clear()
+    
+    try:
+        print("\nGenerating production program...")
+        # Call GenerateCurrentProgram with debug=False
+        normal_chunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings, debug=False)
+        normal_program_text = "".join([item[0] for item in normal_chunks])
+
+        normal_file_path = file_name.replace(".xml", ".st")
+        with open(normal_file_path, "w", encoding='utf-8') as program_file:
+            program_file.write(normal_program_text)
+        print(f"Successfully generated production program: {normal_file_path}")
+        for warning in warnings:
+            print(f"Warning: {warning}")
+
+    except Exception as e:
+        print(f"Error generating production project: {e}", file=sys.stderr)
+        for error in errors:
+            print(f"Details: {error}", file=sys.stderr)
         sys.exit(1)
-        
 
 if __name__ == '__main__':
     main()

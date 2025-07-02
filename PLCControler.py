@@ -30,6 +30,8 @@ import re
 import datetime
 from time import localtime
 from functools import reduce
+import csv
+from copy import deepcopy
 
 import util.paths as paths
 from plcopen import *
@@ -167,6 +169,8 @@ class PLCControler(object):
         self.TotalTypesDict = StdBlckDct.copy()
         self.TotalTypes = StdBlckLst[:]
         self.ProgramFilePath = ""
+        self.DebugVariables = []
+
 
     def GetQualifierTypes(self):
         return QualifierList
@@ -2767,6 +2771,26 @@ class PLCControler(object):
             if filepath:
                 self.SetFilePath(filepath)
             return True
+    
+    def LoadDebugCSV(self, csv_filepath):
+        """
+        Loads debug variables from a specified CSV file.
+        Assumes the CSV contains a single column of variable names.
+        """
+        self.DebugVariables = []
+        try:
+            with open(csv_filepath, mode='r', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if row: # Ensure the row is not empty
+                        variable_name = row[0].strip()
+                        if variable_name: # Ensure the name is not empty
+                            self.DebugVariables.append(variable_name)
+            print(f"Loaded {len(self.DebugVariables)} debug variables from CSV.")
+        except FileNotFoundError:
+            print(f"Error: Debug CSV file not found at '{csv_filepath}'")
+        except Exception as e:
+            print(f"Error reading CSV file: {e}")
 
     # -------------------------------------------------------------------------------
     #                       Search in Current Project Functions
