@@ -170,11 +170,7 @@ class PLCControler(object):
         self.TotalTypes = StdBlckLst[:]
         self.ProgramFilePath = ""
         self.DebugVariables = []
-<<<<<<< HEAD
         self.DebugCallString = ""
-=======
-
->>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
 
     def GetQualifierTypes(self):
         return QualifierList
@@ -2779,24 +2775,19 @@ class PLCControler(object):
     def LoadDebugCSV(self, csv_filepath):
         """
         Loads debug variables from a specified CSV file.
-<<<<<<< HEAD
         Assumes the CSV format is: variable_name,variable_type
-=======
->>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
         """
         self.DebugVariables = []
         try:
             with open(csv_filepath, mode='r', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
-<<<<<<< HEAD
                     # Skip empty rows or rows that don't have exactly 2 columns
                     if row and len(row) == 2:
                         name = row[0].strip()
                         var_type = row[1].strip()
                         if name and var_type:
                             self.DebugVariables.append((name, var_type))
-=======
 
             print(f"Loaded {len(self.DebugVariables)} debug variables from CSV.")
         except FileNotFoundError:

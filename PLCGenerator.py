@@ -101,7 +101,7 @@ class PLCGenException(Exception):
     pass
 
 
-# -------------------------------------------------------------------------------
+'# -------------------------------------------------------------------------------
 #                           Generator of PLC program
 # -------------------------------------------------------------------------------
 
@@ -247,23 +247,19 @@ class ProgramGenerator(object):
 
     # Generate a POU from its name
     def GeneratePouProgram(self, pou_name):
-<<<<<<< HEAD
-            # Verify that POU hasn't been generated yet
-            if not self.PouComputed.get(pou_name, True):
-                # ... (código existente) ...
-                if pou_type in pouTypeNames:
-                    # Create a POU program generator
-                    # +++ MODIFIED: Pass debug_mode down to PouProgramGenerator +++
-                    pou_program = PouProgramGenerator(
-                        self, pou.getname(), pouTypeNames[pou_type], 
-                        self.Errors, self.Warnings, debug_mode=self.DebugMode)
-                    program = pou_program.GenerateProgram(pou)
-                    self.Program += program
-=======
-
->>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
-            else:
-                raise PLCGenException("Undefined pou type \"%s\"" % pou_type)
+        # Verify that POU hasn't been generated yet
+        if not self.PouComputed.get(pou_name, True):
+            # ... (código existente) ...
+            if pou_type in pouTypeNames:
+                # Create a POU program generator
+                # +++ MODIFIED: Pass debug_mode down to PouProgramGenerator +++
+                pou_program = PouProgramGenerator(
+                    self, pou.getname(), pouTypeNames[pou_type], 
+                    self.Errors, self.Warnings, debug_mode=self.DebugMode)
+                program = pou_program.GenerateProgram(pou)
+                self.Program += program
+        else:
+            raise PLCGenException("Undefined pou type \"%s\"" % pou_type)
 
     # Generate a POU defined and used in text
     def GeneratePouProgramInText(self, text):
@@ -486,7 +482,7 @@ class ProgramGenerator(object):
         if noconfig:
             return
         # Generate every configurations defined
-        print("Generate Config(s)")
+# '       print("Generate Config(s)")
         for config in self.Project.getconfigurations():
             self.Program += self.GenerateConfiguration(config)
 
@@ -1769,7 +1765,6 @@ class PouProgramGenerator(object):
                 var_number += 1
             program += [("  END_VAR\n", ())]
         
-<<<<<<< HEAD
         # Conditionally add debug variables and the debug function call
         if self.DebugMode:
             # --- 1. Add Debug Variables from the CSV file ---
@@ -1789,8 +1784,6 @@ class PouProgramGenerator(object):
                 program += [(self.CurrentIndent, ()),
                             (f"{debug_call_string}\n", ())]
         
-=======
->>>>>>> c0a03b2c7905d69de9756b71735429913b89f0a3
         program += [("\n", ())]
         
         # ==========================================================================
