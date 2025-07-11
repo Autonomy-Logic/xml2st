@@ -22,7 +22,7 @@ def main():
             print(f"Error: The file '{args.file}' is not an XML file.")
             return
 
-        print("Compiling file {a1}".format(a1=args.file))
+        print(f"Compiling file {args.file}")
 
         # Extract and print the file name
         file_name = os.path.abspath(args.file)
@@ -32,7 +32,7 @@ def main():
         if result is not None:
             if isinstance(result, (tuple, list)) and len(result) == 2:
                 (num, line) = result
-                print("PLC syntax error at line {a1}:\n{a2}".format(a1=num, a2=line))
+                print(f"PLC syntax error at line {num}:\n{line}")
                 return
             elif isinstance(result, str):
                 print(result)
@@ -60,7 +60,7 @@ def main():
                 program_file.write(program_text)
             print("Stage 1 compilation finished successfully")
         except Exception as e:
-            print("Error compiling project: " + str(e), file=sys.stderr)
+            print(f"Error compiling project: {e}", file=sys.stderr)
             sys.exit(1)
     
     else:
@@ -68,9 +68,15 @@ def main():
             print(f"Error: The file '{args.file}' is not an CSV file.")
             return
         
-        controler = ProjectController()
-        controler.SetCSVFile(args.file)
-        controler.Generate_embedded_plc_debugger()
+        # Generate the embedded PLC debugger file from the CSV file
+        try:
+            controler = ProjectController()
+            controler.SetCSVFile(args.file)
+            controler.Generate_embedded_plc_debugger()
+
+        except Exception as e:
+            print(f"Error generating debugger file: {e}", file=sys.stderr)
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()

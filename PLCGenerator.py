@@ -1088,7 +1088,7 @@ class PouProgramGenerator(object):
             """function returns name of function or function block instance"""
             if name:
                 # function blocks
-                blockname = "{a1}({a2})".format(a1=name, a2=type)
+                blockname = f"{name}({type})"
             else:
                 # functions
                 blockname = type
@@ -1190,7 +1190,7 @@ class PouProgramGenerator(object):
                     self.Program += JoinList([(", ", ())], vars)
                     self.Program += [(");\n", ())]
                 else:
-                    msg = "\"{a1}\" function cancelled in \"{a2}\" POU: No input connected".format(a1=type, a2=self.TagName.split("::")[-1])
+                    msg = f'"{type}" function cancelled in "{self.TagName.split("::")[-1]}" POU: No input connected'
                     self.Warnings.append(msg)
         elif block_infos["type"] == "functionBlock":
             if not self.ComputedBlocks.get(block, False) and not order:
@@ -1404,9 +1404,9 @@ class PouProgramGenerator(object):
                 self.Program += [(self.CurrentIndent + "IF ", var_info + (storage,))] + expression
                 self.Program += [(" THEN\n  ", ())]
                 if storage == "set":
-                    return [("TRUE; (*set*)\n" + self.CurrentIndent + "END_IF", ())]
+                    return [(f"TRUE; (*set*)\n{self.CurrentIndent}END_IF", ())]
                 else:
-                    return [("FALSE; (*reset*)\n" + self.CurrentIndent + "END_IF", ())]
+                    return [(f"FALSE; (*reset*)\n{self.CurrentIndent}END_IF", ())]
             edge = variable.getedge()
             if edge == "rising":
                 return self.AddTrigger("R_TRIG", expression, var_info + ("rising",))
@@ -1773,7 +1773,7 @@ def GenerateCurrentProgram(controler, project, errors, warnings, **kwargs):
     generator = ProgramGenerator(controler, project, errors, warnings)
     if hasattr(controler, "logger"):
         def log(txt):
-            controler.logger.write("    "+txt+"\n")
+            controler.logger.write(f"    {txt}\n")
     else:
         def log(txt):
             pass

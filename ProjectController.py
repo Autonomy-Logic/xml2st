@@ -105,13 +105,8 @@ class ProjectController:
                     self._Ticktime = int(ListGroup[2][0])
 
             except Exception:
-                self.logger.write_error(
-                    _("Cannot open/parse VARIABLES.csv!\n"))
-                self.logger.write_error(traceback.format_exc())
                 self.ResetIECProgramsAndVariables()
-                return False
-
-        return True
+                raise Exception(f"Cannot open/parse VARIABLES.csv!\n{traceback.format_exc()}")
 
     def Generate_plc_debug_cvars(self):
         """
@@ -126,9 +121,7 @@ class ProjectController:
                        "VAR": "_ENUM"}
 
         variable_decl_array = [
-            "{{&({}), {}{}}}".format(
-                v['C_path'], v['type'], type_suffix[v['vartype']]
-            ) for v in self._DbgVariablesList
+            f"{{&({v['C_path']}), {v['type']}{type_suffix[v['vartype']]}}}" for v in self._DbgVariablesList
         ]
 
         enum_types = list(set([v['type'] + type_suffix[v['vartype']]
@@ -141,7 +134,7 @@ class ProjectController:
                  "FB":  ("extern ", "")}
 
         extern_variables_declarations = [
-            "{}{}{} {};".format(types[v['vartype']][0], v['type'], types[v['vartype']][1], v['C_path'])
+            f"{types[v['vartype']][0]}{v['type']}{types[v['vartype']][1]} {v['C_path']};"
             for v in self._VariablesList if '.' not in v['C_path']
         ]
         return variable_decl_array, extern_variables_declarations, enum_types

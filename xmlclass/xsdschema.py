@@ -50,8 +50,7 @@ def GenerateSimpleTypeXMLText(function):
 
 
 def GenerateFloatXMLText(extra_values=None, decimal=None):
-    float_format = (lambda x: "{:.{width}f}".format(x, width=decimal).rstrip('0')
-                    if decimal is not None else str)
+    float_format = (lambda x: f"{x:.{decimal}f}".rstrip('0') if decimal is not None else str)
     extra_values = [] if extra_values is None else extra_values
 
     def generateXMLTextMethod(value, name=None, indent=0):
@@ -64,7 +63,7 @@ def GenerateFloatXMLText(extra_values=None, decimal=None):
         elif value in extra_values or value % 1 != 0:
             text += float_format(value)
         else:
-            text += "{:.0f}".format(value)
+            text += f"{value:.0f}"
         if name is not None:
             text += "</%s>\n" % name
         return text
