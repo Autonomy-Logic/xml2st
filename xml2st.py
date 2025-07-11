@@ -6,9 +6,12 @@ import PLCGenerator
 from PLCControler import PLCControler
 from ProjectController import ProjectController
 
+
 def compile_xml_to_st(xml_file_path):
-    if not os.path.isfile(xml_file_path) or not xml_file_path.lower().endswith('.xml'):
-        print(f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected.")
+    if not os.path.isfile(xml_file_path) or not xml_file_path.lower().endswith(".xml"):
+        print(
+            f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected."
+        )
         return
     print(f"Compiling file {xml_file_path}")
 
@@ -41,7 +44,9 @@ def compile_xml_to_st(xml_file_path):
     errors = []
     warnings = []
     try:
-        ProgramChunks = PLCGenerator.GenerateCurrentProgram(controler, project, errors, warnings)
+        ProgramChunks = PLCGenerator.GenerateCurrentProgram(
+            controler, project, errors, warnings
+        )
         program_text = "".join([item[0] for item in ProgramChunks])
         print("Stage 1 compilation finished successfully")
         return program_text
@@ -50,8 +55,9 @@ def compile_xml_to_st(xml_file_path):
         print(f"Error compiling project: {e}", file=sys.stderr)
         sys.exit(1)
 
+
 def generate_debugger_file(csv_file):
-    if not os.path.isfile(csv_file) or not csv_file.lower().endswith('.csv'):
+    if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
         print(f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.")
         return None, None
 
@@ -59,19 +65,29 @@ def generate_debugger_file(csv_file):
     controler.SetCSVFile(csv_file)
     return controler.Generate_embedded_plc_debugger()[1]
 
+
 def append_debugger_to_st(program_text, debug_text):
     # Wrap debugger code around (* comments *)
-    c_debug_lines = debug_text.split('\n')
-    c_debug = [f'(*DBG:{line}*)' for line in c_debug_lines]
-    c_debug = '\n'.join(c_debug)
+    c_debug_lines = debug_text.split("\n")
+    c_debug = [f"(*DBG:{line}*)" for line in c_debug_lines]
+    c_debug = "\n".join(c_debug)
 
     # Concatenate debugger code with st program
     return f"{program_text}\n{c_debug}"
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Process a PLCopen XML file and transpiles it into a Structured Text (ST) program.')
-    parser.add_argument('--generate-st', type=str, help='The path to the XML file')
-    parser.add_argument('--generate-debug', nargs=2, metavar=('XML_FILE', 'CSV_FILE'), type=str, help='Paths to the XML file and the variables CSV file')
+    parser = argparse.ArgumentParser(
+        description="Process a PLCopen XML file and transpiles it into a Structured Text (ST) program."
+    )
+    parser.add_argument("--generate-st", type=str, help="The path to the XML file")
+    parser.add_argument(
+        "--generate-debug",
+        nargs=2,
+        metavar=("XML_FILE", "CSV_FILE"),
+        type=str,
+        help="Paths to the XML file and the variables CSV file",
+    )
 
     args = parser.parse_args()
 
@@ -85,7 +101,6 @@ def main():
 
             print("Saving ST file...")
 
-
         except Exception as e:
             print(f"Error generating ST file: {e}", file=sys.stderr)
             sys.exit(1)
@@ -97,7 +112,7 @@ def main():
             if program_text is None:
                 # This exception will always be caught
                 raise Exception("Compilation failed, no program text generated.")
-            
+
             debug_text = generate_debugger_file(args.generate_debug[1])
 
             program_text = append_debugger_to_st(program_text, debug_text)
@@ -112,10 +127,12 @@ def main():
         print("Error: No valid arguments provided. Use --help for usage information.")
         return
 
-
-    st_file = os.path.abspath(args.generate_st or args.generate_debug[0]).replace("plc.xml", "program.st")
+    st_file = os.path.abspath(args.generate_st or args.generate_debug[0]).replace(
+        "plc.xml", "program.st"
+    )
     with open(st_file, "w") as file:
         file.write(program_text)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
