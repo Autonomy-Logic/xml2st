@@ -142,18 +142,18 @@ class ProjectController:
     def Generate_embedded_plc_debugger(self):
         dvars, externs, enums = self.Generate_plc_debug_cvars()
 
-        base_folder = paths.AbsDir(__file__)
         loader = FileSystemLoader(
-            os.path.join(base_folder))
+            os.path.join(paths.AbsDir(__file__)))
         template = Environment(loader=loader).get_template('debug.c.j2')
-        cfile = os.path.join(base_folder, 'debug.c')
+        cfile = os.path.join(paths.AbsDir(self._csvfile), 'debug.c')
+        debug_text = template.render(
+            debug={
+                'externs': externs,
+                'vars': dvars,
+                'enums': enums,
+                'types': list(set(a.split("_", 1)[0] for a in enums))
+            }
+        )
         with open(cfile, 'w') as f:
-            f.write(template.render(
-                debug={
-                    'externs': externs,
-                    'vars': dvars,
-                    'enums': enums,
-                    'types': list(set(a.split("_",1)[0] for a in enums))
-                })
-            )
-        return cfile, ''
+            f.write(debug_text)
+        return cfile, debug_text

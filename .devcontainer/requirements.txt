@@ -1,2 +1,3 @@
 lxml==4.9.2
 jinja2
+black

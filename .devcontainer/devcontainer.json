@@ -13,7 +13,10 @@
             },
             "extensions": [
                 "ms-vscode.cpptools",
-                "ms-azuretools.vscode-docker"
+                "ms-azuretools.vscode-docker",
+                "rainbow-panda.panda",
+                "ms-python.python",
+                "ms-python.vscode-pylance"
             ]
         }
     },
