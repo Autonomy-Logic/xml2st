@@ -59,6 +59,15 @@ def generate_debugger_file(csv_file):
     controler.SetCSVFile(csv_file)
     return controler.Generate_embedded_plc_debugger()[1]
 
+def append_debugger_to_st(program_text, debug_text):
+    # Wrap debugger code around (* comments *)
+    c_debug_lines = debug_text.split('\n')
+    c_debug = [f'(*DBG:{line}*)' for line in c_debug_lines]
+    c_debug = '\n'.join(c_debug)
+
+    # Concatenate debugger code with st program
+    return f"{program_text}\n{c_debug}"
+
 def main():
     parser = argparse.ArgumentParser(description='Process a PLCopen XML file and transpiles it into a Structured Text (ST) program.')
     parser.add_argument('--generate-st', type=str, help='The path to the XML file')
@@ -89,8 +98,9 @@ def main():
                 # This exception will always be caught
                 raise Exception("Compilation failed, no program text generated.")
             
-            # TODO: Unused variable: RTOP-33 - Add debug content to ST file before saving
             debug_text = generate_debugger_file(args.generate_debug[1])
+
+            program_text = append_debugger_to_st(program_text, debug_text)
 
             print("Saving files...")
 
