@@ -531,7 +531,7 @@ class PLCControler(object):
             if pou is not None:
                 new_pou = self.Copy(pou)
                 idx = 0
-                new_name = name + "_" + pou_type
+                new_name = f"{name}_{pou_type}"
                 while self.Project.getpou(new_name) is not None:
                     idx += 1
                     new_name = "%s%d" % (name, idx)
@@ -591,7 +591,7 @@ class PLCControler(object):
             # programs cannot be pasted as functions or function blocks
             if orig_type == 'functionBlock' and pou_type == 'function' or \
                orig_type == 'program' and pou_type in ['function', 'functionBlock']:
-                msg = '''{a1} "{a2}" can't be pasted as a {a3}.'''.format(a1=orig_type, a2=name, a3=pou_type)
+                msg = f'''{orig_type} "{name}" can't be pasted as a {pou_type}.'''
                 return msg
 
             new_pou.setpouType(pou_type)
@@ -2740,7 +2740,7 @@ class PLCControler(object):
     def OpenXMLFile(self, filepath):
         self.Project, error = LoadProject(filepath)
         if self.Project is None:
-            return "Project file syntax error:\n\n" + error
+            return f"Project file syntax error:\n\n{error}"
         self.SetFilePath(filepath)
         self.CreateProjectBuffer(True)
         self.ProgramChunks = []
