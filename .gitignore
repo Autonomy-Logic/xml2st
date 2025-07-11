@@ -9,6 +9,7 @@
 tests/tools/Docker/requirements.txt
 **/management.json
 **/.secret
+temp
 
 doc/_build/**
 doc/locale/**
