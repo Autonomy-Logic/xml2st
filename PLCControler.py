@@ -264,7 +264,7 @@ class PLCControler(object):
         self.FilePath = filepath
         if filepath == "":
             self.LastNewIndex += 1
-            self.FileName = _("Unnamed%d") % self.LastNewIndex
+            self.FileName = "Unnamed%d" % self.LastNewIndex
         else:
             self.FileName = os.path.splitext(os.path.basename(filepath))[0]
 
@@ -1207,7 +1207,7 @@ class PLCControler(object):
         self.ConfNodeTypes.extend(typeslist)
         addedcat = [
             {
-                "name": _("%s POUs") % confnodetypes["name"],
+                "name": "%s POUs" % confnodetypes["name"],
                 "list": [
                     pou.getblockInfos() for pou in confnodetypes["types"].getpous()
                 ],
@@ -1229,7 +1229,7 @@ class PLCControler(object):
     def GetConfNodeDataTypes(self, exclude=None, only_locatables=False):
         return [
             {
-                "name": _("%s Data Types") % confnodetypes["name"],
+                "name": "%s Data Types" % confnodetypes["name"],
                 "list": [
                     datatype.getname()
                     for datatype in confnodetypes["types"].getdataTypes()

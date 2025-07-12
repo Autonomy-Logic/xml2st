@@ -16,7 +16,8 @@
                 "ms-azuretools.vscode-docker",
                 "rainbow-panda.panda",
                 "ms-python.python",
-                "ms-python.vscode-pylance"
+                "ms-python.vscode-pylance",
+                "mechatroner.rainbow-csv"
             ]
         }
     },
