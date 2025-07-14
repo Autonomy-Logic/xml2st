@@ -28,8 +28,8 @@ to Python 2 sorting on Python 3.
 """
 
 
-
 import itertools
+
 
 def python2sort(x):
     it = iter(x)

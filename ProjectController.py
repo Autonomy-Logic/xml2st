@@ -4,6 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 from runtime.typemapping import DebugTypesSize
 import util.paths as paths
 
+
 class ProjectController:
 
     def __init__(self):
@@ -40,7 +41,14 @@ class ProjectController:
                 # describes CSV columns
                 ProgramsListAttributeName = ["num", "C_path", "type"]
                 VariablesListAttributeName = [
-                    "num", "vartype", "IEC_path", "C_path", "type", "derived", "retain"]
+                    "num",
+                    "vartype",
+                    "IEC_path",
+                    "C_path",
+                    "type",
+                    "derived",
+                    "retain",
+                ]
                 self._ProgramList = []
                 self._VariablesList = []
                 self._DbgVariablesList = []
@@ -48,7 +56,7 @@ class ProjectController:
 
                 # Separate sections
                 ListGroup = []
-                for line in open(self._csvfile, 'r').readlines():
+                for line in open(self._csvfile, "r").readlines():
                     strippedline = line.strip()
                     if strippedline.startswith("//"):
                         # Start new section
@@ -61,10 +69,10 @@ class ProjectController:
                 for line in ListGroup[0]:
                     # Split and Maps each field to dictionnary entries
                     attrs = dict(
-                        list(zip(ProgramsListAttributeName, line.strip().split(';'))))
+                        list(zip(ProgramsListAttributeName, line.strip().split(";")))
+                    )
                     # Truncate "C_path" to remove conf an resources names
-                    attrs["C_path"] = '__'.join(
-                        attrs["C_path"].split(".", 2)[1:])
+                    attrs["C_path"] = "__".join(attrs["C_path"].split(".", 2)[1:])
                     # Push this dictionnary into result.
                     self._ProgramList.append(attrs)
 
@@ -74,18 +82,19 @@ class ProjectController:
                 for line in ListGroup[1]:
                     # Split and Maps each field to dictionnary entries
                     attrs = dict(
-                        list(zip(VariablesListAttributeName, line.strip().split(';'))))
+                        list(zip(VariablesListAttributeName, line.strip().split(";")))
+                    )
                     # Truncate "C_path" to remove conf an resources names
                     parts = attrs["C_path"].split(".", 2)
                     if len(parts) > 2:
                         config_FB = config_FBs.get(tuple(parts[:2]))
                         if config_FB:
                             parts = [config_FB] + parts[2:]
-                            attrs["C_path"] = '.'.join(parts)
+                            attrs["C_path"] = ".".join(parts)
                         else:
-                            attrs["C_path"] = '__'.join(parts[1:])
+                            attrs["C_path"] = "__".join(parts[1:])
                     else:
-                        attrs["C_path"] = '__'.join(parts)
+                        attrs["C_path"] = "__".join(parts)
                         if attrs["vartype"] == "FB":
                             config_FBs[tuple(parts)] = attrs["C_path"]
                     if attrs["vartype"] != "FB" and attrs["type"] in DebugTypesSize:
@@ -106,7 +115,9 @@ class ProjectController:
 
             except Exception:
                 self.ResetIECProgramsAndVariables()
-                raise Exception(f"Cannot open/parse VARIABLES.csv!\n{traceback.format_exc()}")
+                raise Exception(
+                    f"Cannot open/parse VARIABLES.csv!\n{traceback.format_exc()}"
+                )
 
     def Generate_plc_debug_cvars(self):
         """
@@ -114,46 +125,52 @@ class ProjectController:
         """
         if not self._DbgVariablesList and not self._VariablesList:
             self.GetIECProgramsAndVariables()
-        type_suffix = {"EXT": "_P_ENUM",
-                       "IN" : "_P_ENUM",
-                       "MEM": "_O_ENUM",
-                       "OUT": "_O_ENUM",
-                       "VAR": "_ENUM"}
+        type_suffix = {
+            "EXT": "_P_ENUM",
+            "IN": "_P_ENUM",
+            "MEM": "_O_ENUM",
+            "OUT": "_O_ENUM",
+            "VAR": "_ENUM",
+        }
 
         variable_decl_array = [
-            f"{{&({v['C_path']}), {v['type']}{type_suffix[v['vartype']]}}}" for v in self._DbgVariablesList
+            f"{{&({v['C_path']}), {v['type']}{type_suffix[v['vartype']]}}}"
+            for v in self._DbgVariablesList
         ]
 
-        enum_types = list(set([v['type'] + type_suffix[v['vartype']]
-                      for v in self._DbgVariablesList]))
-        types = {"EXT": ("extern __IEC_", "_p"),
-                 "IN":  ("extern __IEC_", "_p"),
-                 "MEM": ("extern __IEC_", "_p"),
-                 "OUT": ("extern __IEC_", "_p"),
-                 "VAR": ("extern __IEC_", "_t"),
-                 "FB":  ("extern ", "")}
+        enum_types = list(
+            set([v["type"] + type_suffix[v["vartype"]] for v in self._DbgVariablesList])
+        )
+        types = {
+            "EXT": ("extern __IEC_", "_p"),
+            "IN": ("extern __IEC_", "_p"),
+            "MEM": ("extern __IEC_", "_p"),
+            "OUT": ("extern __IEC_", "_p"),
+            "VAR": ("extern __IEC_", "_t"),
+            "FB": ("extern ", ""),
+        }
 
         extern_variables_declarations = [
             f"{types[v['vartype']][0]}{v['type']}{types[v['vartype']][1]} {v['C_path']};"
-            for v in self._VariablesList if '.' not in v['C_path']
+            for v in self._VariablesList
+            if "." not in v["C_path"]
         ]
         return variable_decl_array, extern_variables_declarations, enum_types
 
     def Generate_embedded_plc_debugger(self):
         dvars, externs, enums = self.Generate_plc_debug_cvars()
 
-        loader = FileSystemLoader(
-            os.path.join(paths.AbsDir(__file__)))
-        template = Environment(loader=loader).get_template('debug.c.j2')
-        cfile = os.path.join(paths.AbsDir(self._csvfile), 'debug.c')
+        loader = FileSystemLoader(os.path.join(paths.AbsDir(__file__)))
+        template = Environment(loader=loader).get_template("debug.c.j2")
+        cfile = os.path.join(paths.AbsDir(self._csvfile), "debug.c")
         debug_text = template.render(
             debug={
-                'externs': externs,
-                'vars': dvars,
-                'enums': enums,
-                'types': list(set(a.split("_", 1)[0] for a in enums))
+                "externs": externs,
+                "vars": dvars,
+                "enums": enums,
+                "types": list(set(a.split("_", 1)[0] for a in enums)),
             }
         )
-        with open(cfile, 'w') as f:
+        with open(cfile, "w") as f:
             f.write(debug_text)
         return cfile, debug_text

@@ -24,12 +24,18 @@
 
 # Package initialisation
 
-from .xmlclass import (ClassFactory,
-                       GenerateParser,
-                       DefaultElementClass,
-                       GetAttributeValue,
-                       time_model,
-                       CreateNode,
-                       NodeSetAttr,
-                       NodeRenameAttr)
-from .xsdschema import XSDClassFactory, GenerateParserFromXSD, GenerateParserFromXSDstring
+from .xmlclass import (
+    ClassFactory,
+    GenerateParser,
+    DefaultElementClass,
+    GetAttributeValue,
+    time_model,
+    CreateNode,
+    NodeSetAttr,
+    NodeRenameAttr,
+)
+from .xsdschema import (
+    XSDClassFactory,
+    GenerateParserFromXSD,
+    GenerateParserFromXSDstring,
+)
