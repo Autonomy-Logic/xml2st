@@ -1,0 +1,27 @@
+{
+    "name": "xml2st Dev Container",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "mounts": [
+        "source=${env:HOME}/.ssh,target=/home/dev/.ssh,type=bind"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash"
+            },
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-azuretools.vscode-docker",
+                "rainbow-panda.panda",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "mechatroner.rainbow-csv"
+            ]
+        }
+    },
+    "forwardPorts": [22],
+    "postCreateCommand": "",
+    "remoteUser": "dev"
+}

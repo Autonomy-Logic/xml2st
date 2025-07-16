@@ -1,2 +1,4 @@
 lxml==4.9.2
+jinja2
+black
 pyinstaller==6.14.1

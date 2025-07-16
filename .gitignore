@@ -9,6 +9,7 @@
 tests/tools/Docker/requirements.txt
 **/management.json
 **/.secret
+temp
 .DS_Store
 
 doc/_build/**

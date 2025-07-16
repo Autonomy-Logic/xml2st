@@ -39,11 +39,14 @@ from plcopen.POUVariablesCollector import POUVariablesCollector
 from plcopen.InstanceTagnameCollector import InstanceTagnameCollector
 from plcopen.BlockInstanceCollector import BlockInstanceCollector
 from plcopen.VariableInfoCollector import VariableInfoCollector
-#from graphics.GraphicCommons import *
+
+# from graphics.GraphicCommons import *
 from PLCGenerator import *
 
-duration_model = re.compile(r"(?:([0-9]{1,2})h)?(?:([0-9]{1,2})m(?!s))?(?:([0-9]{1,2})s)?(?:([0-9]{1,3}(?:\.[0-9]*)?)ms)?")
-VARIABLE_NAME_SUFFIX_MODEL = re.compile(r'(\d+)$')
+duration_model = re.compile(
+    r"(?:([0-9]{1,2})h)?(?:([0-9]{1,2})m(?!s))?(?:([0-9]{1,2})s)?(?:([0-9]{1,3}(?:\.[0-9]*)?)ms)?"
+)
+VARIABLE_NAME_SUFFIX_MODEL = re.compile(r"(\d+)$")
 
 ScriptDirectory = paths.AbsDir(__file__)
 
@@ -230,7 +233,9 @@ class PLCControler(object):
         if project is not None:
             for pou in project.getpous():
                 if pou_name is None or pou_name == pou.getname():
-                    variables.extend([var.Name for var in self.GetPouInterfaceVars(pou, debug=debug)])
+                    variables.extend(
+                        [var.Name for var in self.GetPouInterfaceVars(pou, debug=debug)]
+                    )
                     for transition in pou.gettransitionList():
                         variables.append(transition.getname())
                     for action in pou.getactionList():
@@ -259,7 +264,7 @@ class PLCControler(object):
         self.FilePath = filepath
         if filepath == "":
             self.LastNewIndex += 1
-            self.FileName = _("Unnamed%d") % self.LastNewIndex
+            self.FileName = "Unnamed%d" % self.LastNewIndex
         else:
             self.FileName = os.path.splitext(os.path.basename(filepath))[0]
 
@@ -297,74 +302,103 @@ class PLCControler(object):
             infos = {"name": project.getname(), "type": ITEM_PROJECT}
             datatypes = {"name": DATA_TYPES, "type": ITEM_DATATYPES, "values": []}
             for datatype in project.getdataTypes():
-                datatypes["values"].append({
-                    "name": datatype.getname(),
-                    "type": ITEM_DATATYPE,
-                    "tagname": ComputeDataTypeName(datatype.getname()),
-                    "values": []})
+                datatypes["values"].append(
+                    {
+                        "name": datatype.getname(),
+                        "type": ITEM_DATATYPE,
+                        "tagname": ComputeDataTypeName(datatype.getname()),
+                        "values": [],
+                    }
+                )
             pou_types = {
-                "function": {
-                    "name":   FUNCTIONS,
-                    "type":   ITEM_FUNCTION,
-                    "values": []
-                },
+                "function": {"name": FUNCTIONS, "type": ITEM_FUNCTION, "values": []},
                 "functionBlock": {
-                    "name":   FUNCTION_BLOCKS,
-                    "type":   ITEM_FUNCTIONBLOCK,
-                    "values": []
+                    "name": FUNCTION_BLOCKS,
+                    "type": ITEM_FUNCTIONBLOCK,
+                    "values": [],
                 },
-                "program": {
-                    "name":   PROGRAMS,
-                    "type":   ITEM_PROGRAM,
-                    "values": []
-                }
+                "program": {"name": PROGRAMS, "type": ITEM_PROGRAM, "values": []},
             }
             for pou in project.getpous():
                 pou_type = pou.getpouType()
-                pou_infos = {"name": pou.getname(), "type": ITEM_POU,
-                             "tagname": ComputePouName(pou.getname())}
+                pou_infos = {
+                    "name": pou.getname(),
+                    "type": ITEM_POU,
+                    "tagname": ComputePouName(pou.getname()),
+                }
                 pou_values = []
                 if pou.getbodyType() == "SFC":
                     transitions = []
                     for transition in pou.gettransitionList():
-                        transitions.append({
-                            "name": transition.getname(),
-                            "type": ITEM_TRANSITION,
-                            "tagname": ComputePouTransitionName(pou.getname(), transition.getname()),
-                            "values": []})
-                    pou_values.append({"name": TRANSITIONS, "type": ITEM_TRANSITIONS, "values": transitions})
+                        transitions.append(
+                            {
+                                "name": transition.getname(),
+                                "type": ITEM_TRANSITION,
+                                "tagname": ComputePouTransitionName(
+                                    pou.getname(), transition.getname()
+                                ),
+                                "values": [],
+                            }
+                        )
+                    pou_values.append(
+                        {
+                            "name": TRANSITIONS,
+                            "type": ITEM_TRANSITIONS,
+                            "values": transitions,
+                        }
+                    )
                     actions = []
                     for action in pou.getactionList():
-                        actions.append({
-                            "name": action.getname(),
-                            "type": ITEM_ACTION,
-                            "tagname": ComputePouActionName(pou.getname(), action.getname()),
-                            "values": []})
-                    pou_values.append({"name": ACTIONS, "type": ITEM_ACTIONS, "values": actions})
+                        actions.append(
+                            {
+                                "name": action.getname(),
+                                "type": ITEM_ACTION,
+                                "tagname": ComputePouActionName(
+                                    pou.getname(), action.getname()
+                                ),
+                                "values": [],
+                            }
+                        )
+                    pou_values.append(
+                        {"name": ACTIONS, "type": ITEM_ACTIONS, "values": actions}
+                    )
                 if pou_type in pou_types:
                     pou_infos["values"] = pou_values
                     pou_types[pou_type]["values"].append(pou_infos)
-            configurations = {"name": CONFIGURATIONS, "type": ITEM_CONFIGURATIONS, "values": []}
+            configurations = {
+                "name": CONFIGURATIONS,
+                "type": ITEM_CONFIGURATIONS,
+                "values": [],
+            }
             for config in project.getconfigurations():
                 config_name = config.getname()
                 config_infos = {
                     "name": config_name,
                     "type": ITEM_CONFIGURATION,
                     "tagname": ComputeConfigurationName(config.getname()),
-                    "values": []}
+                    "values": [],
+                }
                 resources = {"name": RESOURCES, "type": ITEM_RESOURCES, "values": []}
                 for resource in config.getresource():
                     resource_name = resource.getname()
                     resource_infos = {
                         "name": resource_name,
                         "type": ITEM_RESOURCE,
-                        "tagname": ComputeConfigurationResourceName(config.getname(), resource.getname()),
-                        "values": []}
+                        "tagname": ComputeConfigurationResourceName(
+                            config.getname(), resource.getname()
+                        ),
+                        "values": [],
+                    }
                     resources["values"].append(resource_infos)
                 config_infos["values"] = [resources]
                 configurations["values"].append(config_infos)
-            infos["values"] = [datatypes, pou_types["function"], pou_types["functionBlock"],
-                               pou_types["program"], configurations]
+            infos["values"] = [
+                datatypes,
+                pou_types["function"],
+                pou_types["functionBlock"],
+                pou_types["program"],
+                configurations,
+            ]
             return infos
         return None
 
@@ -391,22 +425,23 @@ class PLCControler(object):
             words = tagname.split("::")
             if words[0] == "P":
                 return self.GetInstanceList(project, words[1])
-            elif words[0] == 'C':
+            elif words[0] == "C":
                 return [words[1]]
-            elif words[0] == 'R':
+            elif words[0] == "R":
                 return ["%s.%s" % (words[1], words[2])]
-            elif words[0] in ['T', 'A']:
-                return ["%s.%s" % (instance, words[2])
-                        for instance in self.SearchPouInstances(
-                            ComputePouName(words[1]), debug)]
+            elif words[0] in ["T", "A"]:
+                return [
+                    "%s.%s" % (instance, words[2])
+                    for instance in self.SearchPouInstances(
+                        ComputePouName(words[1]), debug
+                    )
+                ]
         return []
 
     def GetPouInstanceTagName(self, instance_path, debug=False):
         project = self.GetProject(debug)
         if project is not None:
-            return self.InstanceTagnameCollector.Collect(project,
-                                                         debug,
-                                                         instance_path)
+            return self.InstanceTagnameCollector.Collect(project, debug, instance_path)
 
     def GetInstanceInfos(self, instance_path, debug=False):
         tagname = self.GetPouInstanceTagName(instance_path)
@@ -450,11 +485,13 @@ class PLCControler(object):
         warnings = []
         if self.Project is not None:
             try:
-                self.ProgramChunks = GenerateCurrentProgram(self, self.Project, errors, warnings,**kwargs)
+                self.ProgramChunks = GenerateCurrentProgram(
+                    self, self.Project, errors, warnings, **kwargs
+                )
                 self.NextCompiledProject = self.Copy(self.Project)
                 program_text = "".join([item[0] for item in self.ProgramChunks])
                 if filepath is not None:
-                    programfile = open(filepath, "w", encoding='utf-8')
+                    programfile = open(filepath, "w", encoding="utf-8")
                     programfile.write(program_text)
                     programfile.close()
                     self.ProgramFilePath = filepath
@@ -486,9 +523,17 @@ class PLCControler(object):
             else:
                 next_row = row
                 next_col = col + len(chunk)
-            if (next_row > from_location[0] or next_row == from_location[0] and next_col >= from_location[1]) and len(chunk_infos) > 0:
+            if (
+                next_row > from_location[0]
+                or next_row == from_location[0]
+                and next_col >= from_location[1]
+            ) and len(chunk_infos) > 0:
                 infos.append((chunk_infos, (row, col)))
-            if next_row == to_location[0] and next_col > to_location[1] or next_row > to_location[0]:
+            if (
+                next_row == to_location[0]
+                and next_col > to_location[1]
+                or next_row > to_location[0]
+            ):
                 return infos
             row, col = next_row, next_col
         return infos
@@ -531,14 +576,14 @@ class PLCControler(object):
             if pou is not None:
                 new_pou = self.Copy(pou)
                 idx = 0
-                new_name = name + "_" + pou_type
+                new_name = f"{name}_{pou_type}"
                 while self.Project.getpou(new_name) is not None:
                     idx += 1
                     new_name = "%s%d" % (name, idx)
                 new_pou.setname(new_name)
 
                 orig_type = pou.getpouType()
-                if orig_type == 'function' and pou_type in ['functionBlock', 'program']:
+                if orig_type == "function" and pou_type in ["functionBlock", "program"]:
                     # delete return type
                     return_type_obj = new_pou.interface.getreturnType()
                     new_pou.interface.remove(return_type_obj)
@@ -559,9 +604,9 @@ class PLCControler(object):
         return None
 
     def PastePou(self, pou_type, pou_xml):
-        '''
+        """
         Adds the POU defined by 'pou_xml' to the current project with type 'pou_type'
-        '''
+        """
         try:
             new_pou, error = LoadPou(pou_xml)
         except Exception:
@@ -589,9 +634,13 @@ class PLCControler(object):
             # prevent violations of POU content restrictions:
             # function blocks cannot be pasted as functions,
             # programs cannot be pasted as functions or function blocks
-            if orig_type == 'functionBlock' and pou_type == 'function' or \
-               orig_type == 'program' and pou_type in ['function', 'functionBlock']:
-                msg = '''{a1} "{a2}" can't be pasted as a {a3}.'''.format(a1=orig_type, a2=name, a3=pou_type)
+            if (
+                orig_type == "functionBlock"
+                and pou_type == "function"
+                or orig_type == "program"
+                and pou_type in ["function", "functionBlock"]
+            ):
+                msg = f"""{orig_type} "{name}" can't be pasted as a {pou_type}."""
                 return msg
 
             new_pou.setpouType(pou_type)
@@ -599,7 +648,7 @@ class PLCControler(object):
         self.Project.insertpou(0, new_pou)
         self.BufferProject()
 
-        return ComputePouName(new_name),
+        return (ComputePouName(new_name),)
 
     # Remove a Pou from project
     def ProjectRemovePou(self, pou_name):
@@ -865,13 +914,15 @@ class PLCControler(object):
         current_varlist = None
         current_type = None
         for var in vars:
-            next_type = (var.Class,
-                         var.Option,
-                         var.Location in ["", None] or
-                         # When declaring globals, located
-                         # and not located variables are
-                         # in the same declaration block
-                         var.Class == "Global")
+            next_type = (
+                var.Class,
+                var.Option,
+                var.Location in ["", None] or
+                # When declaring globals, located
+                # and not located variables are
+                # in the same declaration block
+                var.Class == "Global",
+            )
             if current_type != next_type:
                 current_type = next_type
                 infos = VAR_CLASS_INFOS.get(var.Class, None)
@@ -898,7 +949,9 @@ class PLCControler(object):
                     baseType = PLCOpenParser.CreateElement("baseType", "array")
                     array.setbaseType(baseType)
                     for i, dimension in enumerate(dimensions):
-                        dimension_range = PLCOpenParser.CreateElement("dimension", "array")
+                        dimension_range = PLCOpenParser.CreateElement(
+                            "dimension", "array"
+                        )
                         if i == 0:
                             array.setdimension([dimension_range])
                         else:
@@ -906,20 +959,34 @@ class PLCControler(object):
                         dimension_range.setlower(dimension[0])
                         dimension_range.setupper(dimension[1])
                     if base_type_name in self.GetBaseTypes():
-                        baseType.setcontent(PLCOpenParser.CreateElement(
-                            base_type_name.lower()
-                            if base_type_name in ["STRING", "WSTRING"]
-                            else base_type_name, "dataType"))
+                        baseType.setcontent(
+                            PLCOpenParser.CreateElement(
+                                (
+                                    base_type_name.lower()
+                                    if base_type_name in ["STRING", "WSTRING"]
+                                    else base_type_name
+                                ),
+                                "dataType",
+                            )
+                        )
                     else:
-                        derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                        derived_datatype = PLCOpenParser.CreateElement(
+                            "derived", "dataType"
+                        )
                         derived_datatype.setname(base_type_name)
                         baseType.setcontent(derived_datatype)
                     var_type.setcontent(array)
             elif var.Type in self.GetBaseTypes():
-                var_type.setcontent(PLCOpenParser.CreateElement(
-                    var.Type.lower()
-                    if var.Type in ["STRING", "WSTRING"]
-                    else var.Type, "dataType"))
+                var_type.setcontent(
+                    PLCOpenParser.CreateElement(
+                        (
+                            var.Type.lower()
+                            if var.Type in ["STRING", "WSTRING"]
+                            else var.Type
+                        ),
+                        "dataType",
+                    )
+                )
             else:
                 derived_type = PLCOpenParser.CreateElement("derived", "dataType")
                 derived_type.setname(var.Type)
@@ -945,21 +1012,21 @@ class PLCControler(object):
 
     def GetVariableDictionary(self, object_with_vars, tree=False, debug=False):
         variables = []
-        self.VariableInfoCollector.Collect(object_with_vars,
-                                           debug, variables, tree)
+        self.VariableInfoCollector.Collect(object_with_vars, debug, variables, tree)
         return variables
 
     # Add a global var to configuration to configuration
-    def AddConfigurationGlobalVar(self, config_name, var_type, var_name,
-                                  location="", description=""):
+    def AddConfigurationGlobalVar(
+        self, config_name, var_type, var_name, location="", description=""
+    ):
         if self.Project is not None:
             # Found the configuration corresponding to name
             configuration = self.Project.getconfiguration(config_name)
             if configuration is not None:
                 # Set configuration global vars
                 configuration.addglobalVar(
-                    self.GetVarTypeObject(var_type),
-                    var_name, location, description)
+                    self.GetVarTypeObject(var_type), var_name, location, description
+                )
 
     # Replace the configuration globalvars by those given
     def SetConfigurationGlobalVars(self, name, vars):
@@ -968,9 +1035,9 @@ class PLCControler(object):
             configuration = self.Project.getconfiguration(name)
             if configuration is not None:
                 # Set configuration global vars
-                configuration.setglobalVars([
-                    varlist for _vartype, varlist
-                    in self.ExtractVarLists(vars)])
+                configuration.setglobalVars(
+                    [varlist for _vartype, varlist in self.ExtractVarLists(vars)]
+                )
 
     # Return the configuration globalvars
     def GetConfigurationGlobalVars(self, name, debug=False):
@@ -992,11 +1059,18 @@ class PLCControler(object):
             for configuration in self.Project.getconfigurations():
                 if config_name is None or config_name == configuration.getname():
                     variables.extend(
-                        [var.getname() for var in reduce(
-                            lambda x, y: x + y, [
-                                varlist.getvariable()
-                                for varlist in configuration.globalVars],
-                            [])])
+                        [
+                            var.getname()
+                            for var in reduce(
+                                lambda x, y: x + y,
+                                [
+                                    varlist.getvariable()
+                                    for varlist in configuration.globalVars
+                                ],
+                                [],
+                            )
+                        ]
+                    )
         return variables
 
     # Replace the resource globalvars by those given
@@ -1006,9 +1080,9 @@ class PLCControler(object):
             resource = self.Project.getconfigurationResource(config_name, name)
             # Set resource global vars
             if resource is not None:
-                resource.setglobalVars([
-                    varlist for _vartype, varlist
-                    in self.ExtractVarLists(vars)])
+                resource.setglobalVars(
+                    [varlist for _vartype, varlist in self.ExtractVarLists(vars)]
+                )
 
     # Return the resource globalvars
     def GetConfigurationResourceGlobalVars(self, config_name, name, debug=False):
@@ -1024,7 +1098,8 @@ class PLCControler(object):
 
     # Return resource variable names
     def GetConfigurationResourceVariableNames(
-            self, config_name=None, resource_name=None, debug=False):
+        self, config_name=None, resource_name=None, debug=False
+    ):
         variables = []
         project = self.GetProject(debug)
         if project is not None:
@@ -1033,11 +1108,18 @@ class PLCControler(object):
                     for resource in configuration.getresource():
                         if resource_name is None or resource.getname() == resource_name:
                             variables.extend(
-                                [var.getname() for var in reduce(
-                                    lambda x, y: x + y, [
-                                        varlist.getvariable()
-                                        for varlist in resource.globalVars],
-                                    [])])
+                                [
+                                    var.getname()
+                                    for var in reduce(
+                                        lambda x, y: x + y,
+                                        [
+                                            varlist.getvariable()
+                                            for varlist in resource.globalVars
+                                        ],
+                                        [],
+                                    )
+                                ]
+                            )
         return variables
 
     # Return the interface for the given pou
@@ -1058,7 +1140,9 @@ class PLCControler(object):
                 if pou.interface is None:
                     pou.interface = PLCOpenParser.CreateElement("interface", "pou")
                 # Set Pou interface
-                pou.setvars([varlist for _varlist_type, varlist in self.ExtractVarLists(vars)])
+                pou.setvars(
+                    [varlist for _varlist_type, varlist in self.ExtractVarLists(vars)]
+                )
 
     # Replace the return type of the pou given by its name (only for functions)
     def SetPouInterfaceReturnType(self, name, return_type):
@@ -1070,14 +1154,22 @@ class PLCControler(object):
                 # If there isn't any return type yet, add it
                 return_type_obj = pou.interface.getreturnType()
                 if return_type_obj is None:
-                    return_type_obj = PLCOpenParser.CreateElement("returnType", "interface")
+                    return_type_obj = PLCOpenParser.CreateElement(
+                        "returnType", "interface"
+                    )
                     pou.interface.setreturnType(return_type_obj)
                 # Change return type
                 if return_type in self.GetBaseTypes():
-                    return_type_obj.setcontent(PLCOpenParser.CreateElement(
-                        return_type.lower()
-                        if return_type in ["STRING", "WSTRING"]
-                        else return_type, "dataType"))
+                    return_type_obj.setcontent(
+                        PLCOpenParser.CreateElement(
+                            (
+                                return_type.lower()
+                                if return_type in ["STRING", "WSTRING"]
+                                else return_type
+                            ),
+                            "dataType",
+                        )
+                    )
                 else:
                     derived_type = PLCOpenParser.CreateElement("derived", "dataType")
                     derived_type.setname(return_type)
@@ -1099,8 +1191,9 @@ class PLCControler(object):
             # Return the return type if there is one
             return_type = pou.interface.getreturnType()
             if return_type is not None:
-                factory = self.VariableInfoCollector.Collect(return_type,
-                                                             debug, [], tree)
+                factory = self.VariableInfoCollector.Collect(
+                    return_type, debug, [], tree
+                )
                 if tree:
                     return [factory.GetType(), factory.GetTree()]
                 return factory.GetType()
@@ -1112,10 +1205,15 @@ class PLCControler(object):
     # Function that add a new confnode to the confnode list
     def AddConfNodeTypesList(self, typeslist):
         self.ConfNodeTypes.extend(typeslist)
-        addedcat = [{"name": _("%s POUs") % confnodetypes["name"],
-                     "list": [pou.getblockInfos()
-                              for pou in confnodetypes["types"].getpous()]}
-                    for confnodetypes in typeslist]
+        addedcat = [
+            {
+                "name": "%s POUs" % confnodetypes["name"],
+                "list": [
+                    pou.getblockInfos() for pou in confnodetypes["types"].getpous()
+                ],
+            }
+            for confnodetypes in typeslist
+        ]
         self.TotalTypes.extend(addedcat)
         for cat in addedcat:
             for desc in cat["list"]:
@@ -1129,12 +1227,17 @@ class PLCControler(object):
         self.TotalTypes = StdBlckLst[:]
 
     def GetConfNodeDataTypes(self, exclude=None, only_locatables=False):
-        return [{"name": _("%s Data Types") % confnodetypes["name"],
-                 "list": [
-                     datatype.getname()
-                     for datatype in confnodetypes["types"].getdataTypes()
-                     if not only_locatables or self.IsLocatableDataType(datatype)]}
-                for confnodetypes in self.ConfNodeTypes]
+        return [
+            {
+                "name": "%s Data Types" % confnodetypes["name"],
+                "list": [
+                    datatype.getname()
+                    for datatype in confnodetypes["types"].getdataTypes()
+                    if not only_locatables or self.IsLocatableDataType(datatype)
+                ],
+            }
+            for confnodetypes in self.ConfNodeTypes
+        ]
 
     def GetVariableLocationTree(self):
         return []
@@ -1145,7 +1248,7 @@ class PLCControler(object):
     def GetConfigurationExtraVariables(self):
         global_vars = []
         for global_instance in self.GetConfNodeGlobalInstances():
-            if type(global_instance)==tuple:
+            if type(global_instance) == tuple:
                 # usual global without modifier from a CTN or a library
                 var_name, var_type, var_initial = global_instance
                 tempvar = PLCOpenParser.CreateElement("variable", "globalVars")
@@ -1153,10 +1256,16 @@ class PLCControler(object):
 
                 tempvartype = PLCOpenParser.CreateElement("type", "variable")
                 if var_type in self.GetBaseTypes():
-                    tempvartype.setcontent(PLCOpenParser.CreateElement(
-                        var_type.lower()
-                        if var_type in ["STRING", "WSTRING"]
-                        else var_type, "dataType"))
+                    tempvartype.setcontent(
+                        PLCOpenParser.CreateElement(
+                            (
+                                var_type.lower()
+                                if var_type in ["STRING", "WSTRING"]
+                                else var_type
+                            ),
+                            "dataType",
+                        )
+                    )
                 else:
                     tempderivedtype = PLCOpenParser.CreateElement("derived", "dataType")
                     tempderivedtype.setname(var_type)
@@ -1180,16 +1289,29 @@ class PLCControler(object):
         result_blocktype = {}
         for _sectioname, blocktype in self.TotalTypesDict.get(typename, []):
             if inputs is not None and inputs != "undefined":
-                block_inputs = tuple([var_type for _name, var_type, _modifier in blocktype["inputs"]])
-                if reduce(lambda x, y: x and y, [x[0] == "ANY" or self.IsOfType(*x) for x in zip(inputs, block_inputs)], True):
+                block_inputs = tuple(
+                    [var_type for _name, var_type, _modifier in blocktype["inputs"]]
+                )
+                if reduce(
+                    lambda x, y: x and y,
+                    [
+                        x[0] == "ANY" or self.IsOfType(*x)
+                        for x in zip(inputs, block_inputs)
+                    ],
+                    True,
+                ):
                     return blocktype
             else:
                 if result_blocktype:
                     if inputs == "undefined":
                         return None
                     else:
-                        result_blocktype["inputs"] = [(i[0], "ANY", i[2]) for i in result_blocktype["inputs"]]
-                        result_blocktype["outputs"] = [(o[0], "ANY", o[2]) for o in result_blocktype["outputs"]]
+                        result_blocktype["inputs"] = [
+                            (i[0], "ANY", i[2]) for i in result_blocktype["inputs"]
+                        ]
+                        result_blocktype["outputs"] = [
+                            (o[0], "ANY", o[2]) for o in result_blocktype["outputs"]
+                        ]
                         return result_blocktype
                 result_blocktype = blocktype.copy()
         if result_blocktype:
@@ -1202,8 +1324,12 @@ class PLCControler(object):
                 if inputs in [None, "undefined"]:
                     return blocktype_infos
 
-                if inputs == tuple([var_type
-                                    for _name, var_type, _modifier in blocktype_infos["inputs"]]):
+                if inputs == tuple(
+                    [
+                        var_type
+                        for _name, var_type, _modifier in blocktype_infos["inputs"]
+                    ]
+                ):
                     return blocktype_infos
 
         return None
@@ -1218,21 +1344,33 @@ class PLCControler(object):
             if words[0] in ["P", "T", "A"]:
                 name = words[1]
                 pou_type = self.GetPouType(name, debug)
-            filter = (["function"]
-                      if pou_type == "function" or words[0] == "T"
-                      else ["functionBlock", "function"])
+            filter = (
+                ["function"]
+                if pou_type == "function" or words[0] == "T"
+                else ["functionBlock", "function"]
+            )
             blocktypes = [
-                {"name": category["name"],
-                 "list": [block for block in category["list"]
-                          if block["type"] in filter]}
-                for category in self.TotalTypes]
-            blocktypes.append({
-                "name": USER_DEFINED_POUS,
-                "list": [pou.getblockInfos()
-                         for pou in project.getpous(name, filter)
-                         if (name is None or
-                             len(self.GetInstanceList(pou, name, debug)) == 0)]
-            })
+                {
+                    "name": category["name"],
+                    "list": [
+                        block for block in category["list"] if block["type"] in filter
+                    ],
+                }
+                for category in self.TotalTypes
+            ]
+            blocktypes.append(
+                {
+                    "name": USER_DEFINED_POUS,
+                    "list": [
+                        pou.getblockInfos()
+                        for pou in project.getpous(name, filter)
+                        if (
+                            name is None
+                            or len(self.GetInstanceList(pou, name, debug)) == 0
+                        )
+                    ],
+                }
+            )
             return blocktypes
         return self.TotalTypes
 
@@ -1249,11 +1387,15 @@ class PLCControler(object):
                 if block["type"] == "functionBlock":
                     blocktypes.append(block["name"])
         if project is not None:
-            blocktypes.extend([
-                pou.getname()
-                for pou in project.getpous(name, ["functionBlock"])
-                if (name is None or
-                    len(self.GetInstanceList(pou, name, debug)) == 0)])
+            blocktypes.extend(
+                [
+                    pou.getname()
+                    for pou in project.getpous(name, ["functionBlock"])
+                    if (
+                        name is None or len(self.GetInstanceList(pou, name, debug)) == 0
+                    )
+                ]
+            )
         return blocktypes
 
     # Return Block types checking for recursion
@@ -1266,12 +1408,19 @@ class PLCControler(object):
         project = self.GetProject(debug)
         if project is not None:
             blocktypes.extend(
-                [pou.getname()
-                 for pou in project.getpous(filter=["program"])])
+                [pou.getname() for pou in project.getpous(filter=["program"])]
+            )
         return blocktypes
 
     # Return Data Types checking for recursion
-    def GetDataTypes(self, tagname="", basetypes=True, confnodetypes=True, only_locatables=False, debug=False):
+    def GetDataTypes(
+        self,
+        tagname="",
+        basetypes=True,
+        confnodetypes=True,
+        only_locatables=False,
+        debug=False,
+    ):
         if basetypes:
             datatypes = self.GetBaseTypes()
         else:
@@ -1282,11 +1431,22 @@ class PLCControler(object):
             words = tagname.split("::")
             if words[0] in ["D"]:
                 name = words[1]
-            datatypes.extend([
-                datatype.getname()
-                for datatype in project.getdataTypes(name)
-                if ((not only_locatables or self.IsLocatableDataType(datatype, debug)) and
-                    (name is None or len(self.GetInstanceList(datatype, name, debug)) == 0))])
+            datatypes.extend(
+                [
+                    datatype.getname()
+                    for datatype in project.getdataTypes(name)
+                    if (
+                        (
+                            not only_locatables
+                            or self.IsLocatableDataType(datatype, debug)
+                        )
+                        and (
+                            name is None
+                            or len(self.GetInstanceList(datatype, name, debug)) == 0
+                        )
+                    )
+                ]
+            )
         if confnodetypes:
             for category in self.GetConfNodeDataTypes(name, only_locatables):
                 datatypes.extend(category["list"])
@@ -1329,10 +1489,16 @@ class PLCControler(object):
         if basetype_content_type in ["array", "subrangeSigned", "subrangeUnsigned"]:
             basetype = basetype_content.baseType.getcontent()
             basetype_type = basetype.getLocalTag()
-            return (basetype.getname() if basetype_type == "derived"
-                    else basetype_type.upper())
-        return (basetype_content.getname() if basetype_content_type == "derived"
-                else basetype_content_type.upper())
+            return (
+                basetype.getname()
+                if basetype_type == "derived"
+                else basetype_type.upper()
+            )
+        return (
+            basetype_content.getname()
+            if basetype_content_type == "derived"
+            else basetype_content_type.upper()
+        )
 
     # Return Base Type of given possible derived type
     def GetBaseType(self, typename, debug=False):
@@ -1349,11 +1515,11 @@ class PLCControler(object):
         return None
 
     def GetBaseTypes(self):
-        '''
+        """
         return the list of datatypes defined in IEC 61131-3.
         TypeHierarchy_list has a rough order to it (e.g. SINT, INT, DINT, ...),
         which makes it easy for a user to find a type in a menu.
-        '''
+        """
         return [x for x, _y in TypeHierarchy_list if not x.startswith("ANY")]
 
     def IsOfType(self, typename, reference, debug=False):
@@ -1427,13 +1593,13 @@ class PLCControler(object):
             if basetype_content_type == "derived":
                 return self.IsSubrangeType(basetype_content_type, exclude, debug)
             elif basetype_content_type in ["subrangeSigned", "subrangeUnsigned"]:
-                return not self.IsOfType(
-                    self.GetDataTypeBaseType(datatype), exclude)
+                return not self.IsOfType(self.GetDataTypeBaseType(datatype), exclude)
         return False
 
     def IsNumType(self, typename, debug=False):
-        return self.IsOfType(typename, "ANY_NUM", debug) or\
-               self.IsOfType(typename, "ANY_BIT", debug)
+        return self.IsOfType(typename, "ANY_NUM", debug) or self.IsOfType(
+            typename, "ANY_BIT", debug
+        )
 
     def GetDataTypeRange(self, typename, debug=False):
         range = DataTypeRange.get(typename)
@@ -1444,8 +1610,10 @@ class PLCControler(object):
             basetype_content = datatype.baseType.getcontent()
             basetype_content_type = basetype_content.getLocalTag()
             if basetype_content_type in ["subrangeSigned", "subrangeUnsigned"]:
-                return (basetype_content.range.getlower(),
-                        basetype_content.range.getupper())
+                return (
+                    basetype_content.range.getlower(),
+                    basetype_content.range.getupper(),
+                )
             elif basetype_content_type == "derived":
                 return self.GetDataTypeRange(basetype_content.getname(), debug)
         return None
@@ -1456,12 +1624,20 @@ class PLCControler(object):
         project = self.GetProject(debug)
         if project is not None:
             subrange_basetypes.extend(
-                [datatype.getname() for datatype in project.getdataTypes()
-                 if self.IsSubrangeType(datatype.getname(), exclude, debug)])
+                [
+                    datatype.getname()
+                    for datatype in project.getdataTypes()
+                    if self.IsSubrangeType(datatype.getname(), exclude, debug)
+                ]
+            )
         for confnodetype in self.ConfNodeTypes:
             subrange_basetypes.extend(
-                [datatype.getname() for datatype in confnodetype["types"].getdataTypes()
-                 if self.IsSubrangeType(datatype.getname(), exclude, debug)])
+                [
+                    datatype.getname()
+                    for datatype in confnodetype["types"].getdataTypes()
+                    if self.IsSubrangeType(datatype.getname(), exclude, debug)
+                ]
+            )
         return subrange_basetypes
 
     # Return Enumerated Values
@@ -1473,12 +1649,16 @@ class PLCControler(object):
                 basetype_content = datatype_obj.baseType.getcontent()
                 basetype_content_type = basetype_content.getLocalTag()
                 if basetype_content_type == "enum":
-                    return [value.getname()
-                            for value in basetype_content.xpath(
-                                "ppx:values/ppx:value",
-                                namespaces=PLCOpenParser.NSMAP)]
+                    return [
+                        value.getname()
+                        for value in basetype_content.xpath(
+                            "ppx:values/ppx:value", namespaces=PLCOpenParser.NSMAP
+                        )
+                    ]
                 elif basetype_content_type == "derived":
-                    return self.GetEnumeratedDataValues(basetype_content.getname(), debug)
+                    return self.GetEnumeratedDataValues(
+                        basetype_content.getname(), debug
+                    )
         else:
             project = self.GetProject(debug)
             if project is not None:
@@ -1509,24 +1689,32 @@ class PLCControler(object):
                     infos["max"] = basetype_content.range.getupper()
                     base_type = basetype_content.baseType.getcontent()
                     base_type_type = base_type.getLocalTag()
-                    infos["base_type"] = (base_type.getname()
-                                          if base_type_type == "derived"
-                                          else base_type_type)
+                    infos["base_type"] = (
+                        base_type.getname()
+                        if base_type_type == "derived"
+                        else base_type_type
+                    )
                 elif basetype_content_type == "enum":
                     infos["type"] = "Enumerated"
                     infos["values"] = []
-                    for value in basetype_content.xpath("ppx:values/ppx:value", namespaces=PLCOpenParser.NSMAP):
+                    for value in basetype_content.xpath(
+                        "ppx:values/ppx:value", namespaces=PLCOpenParser.NSMAP
+                    ):
                         infos["values"].append(value.getname())
                 elif basetype_content_type == "array":
                     infos["type"] = "Array"
                     infos["dimensions"] = []
                     for dimension in basetype_content.getdimension():
-                        infos["dimensions"].append((dimension.getlower(), dimension.getupper()))
+                        infos["dimensions"].append(
+                            (dimension.getlower(), dimension.getupper())
+                        )
                     base_type = basetype_content.baseType.getcontent()
                     base_type_type = base_type.getLocalTag()
-                    infos["base_type"] = (base_type.getname()
-                                          if base_type_type == "derived"
-                                          else base_type_type.upper())
+                    infos["base_type"] = (
+                        base_type.getname()
+                        if base_type_type == "derived"
+                        else base_type_type.upper()
+                    )
                 elif basetype_content_type == "struct":
                     infos["type"] = "Structure"
                     infos["elements"] = []
@@ -1538,28 +1726,38 @@ class PLCControler(object):
                         if element_type_type == "array":
                             dimensions = []
                             for dimension in element_type.getdimension():
-                                dimensions.append((dimension.getlower(), dimension.getupper()))
+                                dimensions.append(
+                                    (dimension.getlower(), dimension.getupper())
+                                )
                             base_type = element_type.baseType.getcontent()
                             base_type_type = base_type.getLocalTag()
-                            element_infos["Type"] = ("array",
-                                                     base_type.getname()
-                                                     if base_type_type == "derived"
-                                                     else base_type_type.upper(),
-                                                     dimensions)
+                            element_infos["Type"] = (
+                                "array",
+                                (
+                                    base_type.getname()
+                                    if base_type_type == "derived"
+                                    else base_type_type.upper()
+                                ),
+                                dimensions,
+                            )
                         elif element_type_type == "derived":
                             element_infos["Type"] = element_type.getname()
                         else:
                             element_infos["Type"] = element_type_type.upper()
                         if element.initialValue is not None:
-                            element_infos["Initial Value"] = element.initialValue.getvalue()
+                            element_infos["Initial Value"] = (
+                                element.initialValue.getvalue()
+                            )
                         else:
                             element_infos["Initial Value"] = ""
                         infos["elements"].append(element_infos)
                 else:
                     infos["type"] = "Directly"
-                    infos["base_type"] = (basetype_content.getname()
-                                          if basetype_content_type == "derived"
-                                          else basetype_content_type.upper())
+                    infos["base_type"] = (
+                        basetype_content.getname()
+                        if basetype_content_type == "derived"
+                        else basetype_content_type.upper()
+                    )
 
                 if datatype.initialValue is not None:
                     infos["initial"] = datatype.initialValue.getvalue()
@@ -1575,27 +1773,42 @@ class PLCControler(object):
             datatype = self.Project.getdataType(words[1])
             if infos["type"] == "Directly":
                 if infos["base_type"] in self.GetBaseTypes():
-                    datatype.baseType.setcontent(PLCOpenParser.CreateElement(
-                        infos["base_type"].lower()
-                        if infos["base_type"] in ["STRING", "WSTRING"]
-                        else infos["base_type"], "dataType"))
+                    datatype.baseType.setcontent(
+                        PLCOpenParser.CreateElement(
+                            (
+                                infos["base_type"].lower()
+                                if infos["base_type"] in ["STRING", "WSTRING"]
+                                else infos["base_type"]
+                            ),
+                            "dataType",
+                        )
+                    )
                 else:
-                    derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                    derived_datatype = PLCOpenParser.CreateElement(
+                        "derived", "dataType"
+                    )
                     derived_datatype.setname(infos["base_type"])
                     datatype.baseType.setcontent(derived_datatype)
             elif infos["type"] == "Subrange":
                 subrange = PLCOpenParser.CreateElement(
-                    "subrangeUnsigned"
-                    if infos["base_type"] in GetSubTypes("ANY_UINT")
-                    else "subrangeSigned", "dataType")
+                    (
+                        "subrangeUnsigned"
+                        if infos["base_type"] in GetSubTypes("ANY_UINT")
+                        else "subrangeSigned"
+                    ),
+                    "dataType",
+                )
                 datatype.baseType.setcontent(subrange)
                 subrange.range.setlower(infos["min"])
                 subrange.range.setupper(infos["max"])
                 if infos["base_type"] in self.GetBaseTypes():
                     subrange.baseType.setcontent(
-                        PLCOpenParser.CreateElement(infos["base_type"], "dataType"))
+                        PLCOpenParser.CreateElement(infos["base_type"], "dataType")
+                    )
                 else:
-                    derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                    derived_datatype = PLCOpenParser.CreateElement(
+                        "derived", "dataType"
+                    )
                     derived_datatype.setname(infos["base_type"])
                     subrange.baseType.setcontent(derived_datatype)
             elif infos["type"] == "Enumerated":
@@ -1622,12 +1835,20 @@ class PLCControler(object):
                     else:
                         array.appenddimension(dimension_range)
                 if infos["base_type"] in self.GetBaseTypes():
-                    array.baseType.setcontent(PLCOpenParser.CreateElement(
-                        infos["base_type"].lower()
-                        if infos["base_type"] in ["STRING", "WSTRING"]
-                        else infos["base_type"], "dataType"))
+                    array.baseType.setcontent(
+                        PLCOpenParser.CreateElement(
+                            (
+                                infos["base_type"].lower()
+                                if infos["base_type"] in ["STRING", "WSTRING"]
+                                else infos["base_type"]
+                            ),
+                            "dataType",
+                        )
+                    )
                 else:
-                    derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                    derived_datatype = PLCOpenParser.CreateElement(
+                        "derived", "dataType"
+                    )
                     derived_datatype.setname(infos["base_type"])
                     array.baseType.setcontent(derived_datatype)
             elif infos["type"] == "Structure":
@@ -1639,13 +1860,17 @@ class PLCControler(object):
                     element_type = PLCOpenParser.CreateElement("type", "variable")
                     if isinstance(element_infos["Type"], tuple):
                         if element_infos["Type"][0] == "array":
-                            _array_type, base_type_name, dimensions = element_infos["Type"]
+                            _array_type, base_type_name, dimensions = element_infos[
+                                "Type"
+                            ]
                             array = PLCOpenParser.CreateElement("array", "dataType")
                             baseType = PLCOpenParser.CreateElement("baseType", "array")
                             array.setbaseType(baseType)
                             element_type.setcontent(array)
                             for j, dimension in enumerate(dimensions):
-                                dimension_range = PLCOpenParser.CreateElement("dimension", "array")
+                                dimension_range = PLCOpenParser.CreateElement(
+                                    "dimension", "array"
+                                )
                                 dimension_range.setlower(dimension[0])
                                 dimension_range.setupper(dimension[1])
                                 if j == 0:
@@ -1653,22 +1878,37 @@ class PLCControler(object):
                                 else:
                                     array.appenddimension(dimension_range)
                             if base_type_name in self.GetBaseTypes():
-                                baseType.setcontent(PLCOpenParser.CreateElement(
-                                    base_type_name.lower()
-                                    if base_type_name in ["STRING", "WSTRING"]
-                                    else base_type_name, "dataType"))
+                                baseType.setcontent(
+                                    PLCOpenParser.CreateElement(
+                                        (
+                                            base_type_name.lower()
+                                            if base_type_name in ["STRING", "WSTRING"]
+                                            else base_type_name
+                                        ),
+                                        "dataType",
+                                    )
+                                )
                             else:
-                                derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                                derived_datatype = PLCOpenParser.CreateElement(
+                                    "derived", "dataType"
+                                )
                                 derived_datatype.setname(base_type_name)
                                 array.baseType.setcontent(derived_datatype)
                     elif element_infos["Type"] in self.GetBaseTypes():
                         element_type.setcontent(
                             PLCOpenParser.CreateElement(
-                                element_infos["Type"].lower()
-                                if element_infos["Type"] in ["STRING", "WSTRING"]
-                                else element_infos["Type"], "dataType"))
+                                (
+                                    element_infos["Type"].lower()
+                                    if element_infos["Type"] in ["STRING", "WSTRING"]
+                                    else element_infos["Type"]
+                                ),
+                                "dataType",
+                            )
+                        )
                     else:
-                        derived_datatype = PLCOpenParser.CreateElement("derived", "dataType")
+                        derived_datatype = PLCOpenParser.CreateElement(
+                            "derived", "dataType"
+                        )
                         derived_datatype.setname(element_infos["Type"])
                         element_type.setcontent(derived_datatype)
                     element.settype(element_type)
@@ -1682,7 +1922,9 @@ class PLCControler(object):
                         struct.appendvariable(element)
             if infos["initial"] != "":
                 if datatype.initialValue is None:
-                    datatype.initialValue = PLCOpenParser.CreateElement("initialValue", "dataType")
+                    datatype.initialValue = PLCOpenParser.CreateElement(
+                        "initialValue", "dataType"
+                    )
                 datatype.initialValue.setvalue(infos["initial"])
             else:
                 datatype.initialValue = None
@@ -1701,16 +1943,16 @@ class PLCControler(object):
                 return project.getdataType(words[1])
             elif words[0] == "P":
                 return project.getpou(words[1])
-            elif words[0] in ['T', 'A']:
+            elif words[0] in ["T", "A"]:
                 pou = project.getpou(words[1])
                 if pou is not None:
-                    if words[0] == 'T':
+                    if words[0] == "T":
                         return pou.gettransition(words[2])
-                    elif words[0] == 'A':
+                    elif words[0] == "A":
                         return pou.getaction(words[2])
-            elif words[0] == 'C':
+            elif words[0] == "C":
                 return project.getconfiguration(words[1])
-            elif words[0] == 'R':
+            elif words[0] == "R":
                 return project.getconfigurationResource(words[1], words[2])
         return None
 
@@ -1735,9 +1977,9 @@ class PLCControler(object):
         words = tagname.split("::")
         if words[0] == "P":
             return self.GetPouBodyType(words[1], debug)
-        elif words[0] == 'T':
+        elif words[0] == "T":
             return self.GetTransitionBodyType(words[1], words[2], debug)
-        elif words[0] == 'A':
+        elif words[0] == "A":
             return self.GetActionBodyType(words[1], words[2], debug)
         return None
 
@@ -1761,7 +2003,7 @@ class PLCControler(object):
                 pou = self.Project.getpou(words[1])
                 if pou is not None:
                     return self.GetPouInterfaceReturnType(pou, tree, debug)
-        elif words[0] == 'T':
+        elif words[0] == "T":
             return ["BOOL", ([], [])]
         return None
 
@@ -1807,8 +2049,11 @@ class PLCControler(object):
         elif words[0] in ["C", "R"]:
             names = self.GetConfigurationVariableNames(words[1], debug)
             if words[0] == "R":
-                names.extend(self.GetConfigurationResourceVariableNames(
-                    words[1], words[2], debug))
+                names.extend(
+                    self.GetConfigurationResourceVariableNames(
+                        words[1], words[2], debug
+                    )
+                )
             return names
         return []
 
@@ -1818,17 +2063,24 @@ class PLCControler(object):
             return element.tostring()
         return ""
 
-    def GetEditedElementInstancesCopy(self, tagname, blocks_id=None, wires=None, debug=False):
+    def GetEditedElementInstancesCopy(
+        self, tagname, blocks_id=None, wires=None, debug=False
+    ):
         element = self.GetEditedElement(tagname, debug)
         text = ""
         if element is not None:
-            wires = dict([(wire, True)
-                          for wire in wires
-                          if wire[0] in blocks_id and wire[1] in blocks_id])
+            wires = dict(
+                [
+                    (wire, True)
+                    for wire in wires
+                    if wire[0] in blocks_id and wire[1] in blocks_id
+                ]
+            )
             copy_body = PLCOpenParser.CreateElement("body", "pou")
             element.append(copy_body)
             copy_body.setcontent(
-                PLCOpenParser.CreateElement(element.getbodyType(), "body"))
+                PLCOpenParser.CreateElement(element.getbodyType(), "body")
+            )
             for id in blocks_id:
                 instance = element.getinstance(id)
                 if instance is not None:
@@ -1839,31 +2091,46 @@ class PLCControler(object):
             element.remove(copy_body)
         return text
 
-    def GenerateNewName(self, tagname, name, format, start_idx=0, exclude=None, debug=False):
+    def GenerateNewName(
+        self, tagname, name, format, start_idx=0, exclude=None, debug=False
+    ):
         if name is not None:
             result = re.search(VARIABLE_NAME_SUFFIX_MODEL, name)
             if result is not None:
-                format = name[:result.start(1)] + '%d'
+                format = name[: result.start(1)] + "%d"
                 start_idx = int(result.group(1))
             else:
-                format = name + '%d'
+                format = name + "%d"
 
         names = {} if exclude is None else exclude.copy()
         if tagname is not None:
-            names.update(dict([(varname.upper(), True)
-                               for varname in self.GetEditedElementVariables(tagname, debug)]))
+            names.update(
+                dict(
+                    [
+                        (varname.upper(), True)
+                        for varname in self.GetEditedElementVariables(tagname, debug)
+                    ]
+                )
+            )
             words = tagname.split("::")
             if words[0] in ["P", "T", "A"]:
                 element = self.GetEditedElement(tagname, debug)
                 if element is not None and element.getbodyType() not in ["ST", "IL"]:
                     for instance in element.getinstances():
                         if isinstance(
-                                instance,
-                                (PLCOpenParser.GetElementClass("step",         "sfcObjects"),
-                                 PLCOpenParser.GetElementClass("connector",    "commonObjects"),
-                                 PLCOpenParser.GetElementClass("continuation", "commonObjects"))):
+                            instance,
+                            (
+                                PLCOpenParser.GetElementClass("step", "sfcObjects"),
+                                PLCOpenParser.GetElementClass(
+                                    "connector", "commonObjects"
+                                ),
+                                PLCOpenParser.GetElementClass(
+                                    "continuation", "commonObjects"
+                                ),
+                            ),
+                        ):
                             names[instance.getname().upper()] = True
-            elif words[0] == 'R':
+            elif words[0] == "R":
                 element = self.GetEditedElement(tagname, debug)
                 for task in element.gettask():
                     names[task.getname().upper()] = True
@@ -1891,11 +2158,13 @@ class PLCControler(object):
 
         i = start_idx
         while name is None or names.get(name.upper(), False):
-            name = (format % i)
+            name = format % i
             i += 1
         return name
 
-    def PasteEditedElementInstances(self, tagname, text, new_pos, middle=False, debug=False):
+    def PasteEditedElementInstances(
+        self, tagname, text, new_pos, middle=False, debug=False
+    ):
         element = self.GetEditedElement(tagname, debug)
         _element_name, element_type = self.GetEditedElementType(tagname, debug)
         if element is not None:
@@ -1909,7 +2178,9 @@ class PLCControler(object):
                 scaling = properties["scaling"][bodytype]
 
             # Get ids already by all the instances in edited element
-            used_id = dict([(instance.getlocalId(), True) for instance in element.getinstances()])
+            used_id = dict(
+                [(instance.getlocalId(), True) for instance in element.getinstances()]
+            )
             new_id = {}
 
             try:
@@ -1929,20 +2200,24 @@ class PLCControler(object):
                     blockname = instance.getinstanceName()
                     if blocktype_infos["type"] != "function" and blockname is not None:
                         if element_type == "function":
-                            return "FunctionBlock \"%s\" can't be pasted in a Function!!!" % blocktype
-                        blockname = self.GenerateNewName(tagname,
-                                                         blockname,
-                                                         "%s%%d" % blocktype,
-                                                         debug=debug)
+                            return (
+                                'FunctionBlock "%s" can\'t be pasted in a Function!!!'
+                                % blocktype
+                            )
+                        blockname = self.GenerateNewName(
+                            tagname, blockname, "%s%%d" % blocktype, debug=debug
+                        )
                         exclude[blockname] = True
                         instance.setinstanceName(blockname)
                         self.AddEditedElementPouVar(tagname, blocktype, blockname)
                 elif instance_type == "step":
-                    stepname = self.GenerateNewName(tagname,
-                                                    instance.getname(),
-                                                    "Step%d",
-                                                    exclude=exclude,
-                                                    debug=debug)
+                    stepname = self.GenerateNewName(
+                        tagname,
+                        instance.getname(),
+                        "Step%d",
+                        exclude=exclude,
+                        debug=debug,
+                    )
                     exclude[stepname] = True
                     instance.setname(stepname)
                 localid = instance.getlocalId()
@@ -1978,8 +2253,10 @@ class PLCControler(object):
                     miny += 1
                 minx *= scaling[0]
                 miny *= scaling[1]
-                new_pos = (max(minx, round(new_pos[0] / scaling[0]) * scaling[0]),
-                           max(miny, round(new_pos[1] / scaling[1]) * scaling[1]))
+                new_pos = (
+                    max(minx, round(new_pos[0] / scaling[0]) * scaling[0]),
+                    max(miny, round(new_pos[1] / scaling[1]) * scaling[1]),
+                )
             else:
                 new_pos = (max(30, new_pos[0]), max(30, new_pos[1]))
             diff = (int(new_pos[0] - x), int(new_pos[1] - y))
@@ -2034,9 +2311,12 @@ class PLCControler(object):
     def GetVarTypeObject(self, var_type):
         var_type_obj = PLCOpenParser.CreateElement("type", "variable")
         if not var_type.startswith("ANY") and TypeHierarchy.get(var_type):
-            var_type_obj.setcontent(PLCOpenParser.CreateElement(
-                var_type.lower() if var_type in ["STRING", "WSTRING"]
-                else var_type, "dataType"))
+            var_type_obj.setcontent(
+                PLCOpenParser.CreateElement(
+                    var_type.lower() if var_type in ["STRING", "WSTRING"] else var_type,
+                    "dataType",
+                )
+            )
         else:
             derived_type = PLCOpenParser.CreateElement("derived", "dataType")
             derived_type.setname(var_type)
@@ -2046,27 +2326,25 @@ class PLCControler(object):
     def AddEditedElementPouVar(self, tagname, var_type, name, **args):
         if self.Project is not None:
             words = tagname.split("::")
-            if words[0] in ['P', 'T', 'A']:
+            if words[0] in ["P", "T", "A"]:
                 pou = self.Project.getpou(words[1])
                 if pou is not None:
-                    pou.addpouLocalVar(
-                        self.GetVarTypeObject(var_type),
-                        name, **args)
+                    pou.addpouLocalVar(self.GetVarTypeObject(var_type), name, **args)
 
     def AddEditedElementPouExternalVar(self, tagname, var_type, name, **args):
         if self.Project is not None:
             words = tagname.split("::")
-            if words[0] in ['P', 'T', 'A']:
+            if words[0] in ["P", "T", "A"]:
                 pou = self.Project.getpou(words[1])
                 if pou is not None:
-                    pou.addpouExternalVar(
-                        self.GetVarTypeObject(var_type),
-                        name, **args)
+                    pou.addpouExternalVar(self.GetVarTypeObject(var_type), name, **args)
 
-    def ChangeEditedElementPouVar(self, tagname, old_type, old_name, new_type, new_name):
+    def ChangeEditedElementPouVar(
+        self, tagname, old_type, old_name, new_type, new_name
+    ):
         if self.Project is not None:
             words = tagname.split("::")
-            if words[0] in ['P', 'T', 'A']:
+            if words[0] in ["P", "T", "A"]:
                 pou = self.Project.getpou(words[1])
                 if pou is not None:
                     pou.changepouVar(old_type, old_name, new_type, new_name)
@@ -2074,7 +2352,7 @@ class PLCControler(object):
     def RemoveEditedElementPouVar(self, tagname, type, name):
         if self.Project is not None:
             words = tagname.split("::")
-            if words[0] in ['P', 'T', 'A']:
+            if words[0] in ["P", "T", "A"]:
                 pou = self.Project.getpou(words[1])
                 if pou is not None:
                     pou.removepouVar(type, name)
@@ -2105,16 +2383,22 @@ class PLCControler(object):
                 old_typeinfos = self.GetBlockType(old_type)
                 new_typeinfos = self.GetBlockType(new_type)
                 if old_typeinfos is None or new_typeinfos is None:
-                    self.ChangeEditedElementPouVar(tagname, old_type, old_name, new_type, new_name)
+                    self.ChangeEditedElementPouVar(
+                        tagname, old_type, old_name, new_type, new_name
+                    )
                 elif new_typeinfos["type"] != old_typeinfos["type"]:
                     if new_typeinfos["type"] == "function":
                         self.RemoveEditedElementPouVar(tagname, old_type, old_name)
                     else:
                         self.AddEditedElementPouVar(tagname, new_type, new_name)
                 elif new_typeinfos["type"] != "function":
-                    self.ChangeEditedElementPouVar(tagname, old_type, old_name, new_type, new_name)
+                    self.ChangeEditedElementPouVar(
+                        tagname, old_type, old_name, new_type, new_name
+                    )
             elif new_name != old_name:
-                self.ChangeEditedElementPouVar(tagname, old_type, old_name, new_type, new_name)
+                self.ChangeEditedElementPouVar(
+                    tagname, old_type, old_name, new_type, new_name
+                )
             for param, value in list(infos.items()):
                 if param == "name":
                     if value != "":
@@ -2137,7 +2421,9 @@ class PLCControler(object):
                     block.inputVariables.setvariable([])
                     block.outputVariables.setvariable([])
                     for connector in value["inputs"]:
-                        variable = PLCOpenParser.CreateElement("variable", "inputVariables")
+                        variable = PLCOpenParser.CreateElement(
+                            "variable", "inputVariables"
+                        )
                         block.inputVariables.appendvariable(variable)
                         variable.setformalParameter(connector.GetName())
                         if connector.IsNegated():
@@ -2145,10 +2431,14 @@ class PLCControler(object):
                         if connector.GetEdge() != "none":
                             variable.setedge(connector.GetEdge())
                         position = connector.GetRelPosition()
-                        variable.connectionPointIn.setrelPositionXY(position.x, position.y)
+                        variable.connectionPointIn.setrelPositionXY(
+                            position.x, position.y
+                        )
                         self.SetConnectionWires(variable.connectionPointIn, connector)
                     for connector in value["outputs"]:
-                        variable = PLCOpenParser.CreateElement("variable", "outputVariables")
+                        variable = PLCOpenParser.CreateElement(
+                            "variable", "outputVariables"
+                        )
                         block.outputVariables.appendvariable(variable)
                         variable.setformalParameter(connector.GetName())
                         if connector.IsNegated():
@@ -2157,16 +2447,20 @@ class PLCControler(object):
                             variable.setedge(connector.GetEdge())
                         position = connector.GetRelPosition()
                         variable.addconnectionPointOut()
-                        variable.connectionPointOut.setrelPositionXY(position.x, position.y)
+                        variable.connectionPointOut.setrelPositionXY(
+                            position.x, position.y
+                        )
             block.tostring()
 
     def AddEditedElementVariable(self, tagname, id, var_type):
         element = self.GetEditedElement(tagname)
         if element is not None:
             variable = PLCOpenParser.CreateElement(
-                {INPUT: "inVariable",
-                 OUTPUT: "outVariable",
-                 INOUT: "inOutVariable"}[var_type], "fbdObjects")
+                {INPUT: "inVariable", OUTPUT: "outVariable", INOUT: "inOutVariable"}[
+                    var_type
+                ],
+                "fbdObjects",
+            )
             variable.setlocalId(id)
             element.addinstance(variable)
 
@@ -2179,7 +2473,10 @@ class PLCControler(object):
             for param, value in list(infos.items()):
                 if param == "name":
                     variable.setexpression(value)
-                elif param == "executionOrder" and variable.getexecutionOrderId() != value:
+                elif (
+                    param == "executionOrder"
+                    and variable.getexecutionOrderId() != value
+                ):
                     element.setelementExecutionOrder(variable, value)
                 elif param == "height":
                     variable.setheight(value)
@@ -2200,7 +2497,9 @@ class PLCControler(object):
                             variable.setedge(output.GetEdge())
                         position = output.GetRelPosition()
                         variable.addconnectionPointOut()
-                        variable.connectionPointOut.setrelPositionXY(position.x, position.y)
+                        variable.connectionPointOut.setrelPositionXY(
+                            position.x, position.y
+                        )
                     if len(value["inputs"]) > 0:
                         input = value["inputs"][0]
                         if len(value["outputs"]) > 0:
@@ -2211,15 +2510,18 @@ class PLCControler(object):
                             variable.setedge(input.GetEdge())
                         position = input.GetRelPosition()
                         variable.addconnectionPointIn()
-                        variable.connectionPointIn.setrelPositionXY(position.x, position.y)
+                        variable.connectionPointIn.setrelPositionXY(
+                            position.x, position.y
+                        )
                         self.SetConnectionWires(variable.connectionPointIn, input)
 
     def AddEditedElementConnection(self, tagname, id, connection_type):
         element = self.GetEditedElement(tagname)
         if element is not None:
             connection = PLCOpenParser.CreateElement(
-                {CONNECTOR: "connector",
-                 CONTINUATION: "continuation"}[connection_type], "commonObjects")
+                {CONNECTOR: "connector", CONTINUATION: "continuation"}[connection_type],
+                "commonObjects",
+            )
             connection.setlocalId(id)
             element.addinstance(connection)
 
@@ -2242,12 +2544,22 @@ class PLCControler(object):
                     connection.sety(value)
                 elif param == "connector":
                     position = value.GetRelPosition()
-                    if isinstance(connection, PLCOpenParser.GetElementClass("continuation", "commonObjects")):
+                    if isinstance(
+                        connection,
+                        PLCOpenParser.GetElementClass("continuation", "commonObjects"),
+                    ):
                         connection.addconnectionPointOut()
-                        connection.connectionPointOut.setrelPositionXY(position.x, position.y)
-                    elif isinstance(connection, PLCOpenParser.GetElementClass("connector", "commonObjects")):
+                        connection.connectionPointOut.setrelPositionXY(
+                            position.x, position.y
+                        )
+                    elif isinstance(
+                        connection,
+                        PLCOpenParser.GetElementClass("connector", "commonObjects"),
+                    ):
                         connection.addconnectionPointIn()
-                        connection.connectionPointIn.setrelPositionXY(position.x, position.y)
+                        connection.connectionPointIn.setrelPositionXY(
+                            position.x, position.y
+                        )
                         self.SetConnectionWires(connection.connectionPointIn, value)
 
     def AddEditedElementComment(self, tagname, id):
@@ -2277,8 +2589,11 @@ class PLCControler(object):
         element = self.GetEditedElement(tagname)
         if element is not None:
             powerrail = PLCOpenParser.CreateElement(
-                {LEFTRAIL: "leftPowerRail",
-                 RIGHTRAIL: "rightPowerRail"}[powerrail_type], "ldObjects")
+                {LEFTRAIL: "leftPowerRail", RIGHTRAIL: "rightPowerRail"}[
+                    powerrail_type
+                ],
+                "ldObjects",
+            )
             powerrail.setlocalId(id)
             element.addinstance(powerrail)
 
@@ -2298,18 +2613,28 @@ class PLCControler(object):
                 elif param == "y":
                     powerrail.sety(value)
                 elif param == "connectors":
-                    if isinstance(powerrail, PLCOpenParser.GetElementClass("leftPowerRail", "ldObjects")):
+                    if isinstance(
+                        powerrail,
+                        PLCOpenParser.GetElementClass("leftPowerRail", "ldObjects"),
+                    ):
                         powerrail.setconnectionPointOut([])
                         for connector in value["outputs"]:
                             position = connector.GetRelPosition()
-                            connection = PLCOpenParser.CreateElement("connectionPointOut", "leftPowerRail")
+                            connection = PLCOpenParser.CreateElement(
+                                "connectionPointOut", "leftPowerRail"
+                            )
                             powerrail.appendconnectionPointOut(connection)
                             connection.setrelPositionXY(position.x, position.y)
-                    elif isinstance(powerrail, PLCOpenParser.GetElementClass("rightPowerRail", "ldObjects")):
+                    elif isinstance(
+                        powerrail,
+                        PLCOpenParser.GetElementClass("rightPowerRail", "ldObjects"),
+                    ):
                         powerrail.setconnectionPointIn([])
                         for connector in value["inputs"]:
                             position = connector.GetRelPosition()
-                            connection = PLCOpenParser.CreateElement("connectionPointIn", "rightPowerRail")
+                            connection = PLCOpenParser.CreateElement(
+                                "connectionPointIn", "rightPowerRail"
+                            )
                             powerrail.appendconnectionPointIn(connection)
                             connection.setrelPositionXY(position.x, position.y)
                             self.SetConnectionWires(connection, connector)
@@ -2335,7 +2660,8 @@ class PLCControler(object):
                         CONTACT_NORMAL: (False, "none"),
                         CONTACT_REVERSE: (True, "none"),
                         CONTACT_RISING: (False, "rising"),
-                        CONTACT_FALLING: (False, "falling")}[value]
+                        CONTACT_FALLING: (False, "falling"),
+                    }[value]
                     contact.setnegated(negated)
                     contact.setedge(edge)
                 elif param == "height":
@@ -2380,7 +2706,8 @@ class PLCControler(object):
                         COIL_SET: (False, "set", "none"),
                         COIL_RESET: (False, "reset", "none"),
                         COIL_RISING: (False, "none", "rising"),
-                        COIL_FALLING: (False, "none", "falling")}[value]
+                        COIL_FALLING: (False, "none", "falling"),
+                    }[value]
                     coil.setnegated(negated)
                     coil.setstorage(storage)
                     coil.setedge(edge)
@@ -2449,7 +2776,9 @@ class PLCControler(object):
                     if value:
                         position = value.GetRelPosition()
                         step.addconnectionPointOutAction()
-                        step.connectionPointOutAction.setrelPositionXY(position.x, position.y)
+                        step.connectionPointOutAction.setrelPositionXY(
+                            position.x, position.y
+                        )
                     else:
                         step.deleteconnectionPointOutAction()
 
@@ -2486,13 +2815,23 @@ class PLCControler(object):
                     input_connector = value["inputs"][0]
                     position = input_connector.GetRelPosition()
                     transition.addconnectionPointIn()
-                    transition.connectionPointIn.setrelPositionXY(position.x, position.y)
-                    self.SetConnectionWires(transition.connectionPointIn, input_connector)
+                    transition.connectionPointIn.setrelPositionXY(
+                        position.x, position.y
+                    )
+                    self.SetConnectionWires(
+                        transition.connectionPointIn, input_connector
+                    )
                     output_connector = value["outputs"][0]
                     position = output_connector.GetRelPosition()
                     transition.addconnectionPointOut()
-                    transition.connectionPointOut.setrelPositionXY(position.x, position.y)
-                elif infos.get("type", None) == "connection" and param == "connection" and value:
+                    transition.connectionPointOut.setrelPositionXY(
+                        position.x, position.y
+                    )
+                elif (
+                    infos.get("type", None) == "connection"
+                    and param == "connection"
+                    and value
+                ):
                     transition.setconditionContent("connection", None)
                     self.SetConnectionWires(transition.condition.content, value)
 
@@ -2500,19 +2839,26 @@ class PLCControler(object):
         element = self.GetEditedElement(tagname)
         if element is not None:
             divergence = PLCOpenParser.CreateElement(
-                {SELECTION_DIVERGENCE: "selectionDivergence",
-                 SELECTION_CONVERGENCE: "selectionConvergence",
-                 SIMULTANEOUS_DIVERGENCE: "simultaneousDivergence",
-                 SIMULTANEOUS_CONVERGENCE: "simultaneousConvergence"}.get(
-                     divergence_type), "sfcObjects")
+                {
+                    SELECTION_DIVERGENCE: "selectionDivergence",
+                    SELECTION_CONVERGENCE: "selectionConvergence",
+                    SIMULTANEOUS_DIVERGENCE: "simultaneousDivergence",
+                    SIMULTANEOUS_CONVERGENCE: "simultaneousConvergence",
+                }.get(divergence_type),
+                "sfcObjects",
+            )
             divergence.setlocalId(id)
             element.addinstance(divergence)
 
     DivergenceTypes = [
-        (divergence_type,
-         PLCOpenParser.GetElementClass(divergence_type, "sfcObjects"))
-        for divergence_type in ["selectionDivergence", "simultaneousDivergence",
-                                "selectionConvergence", "simultaneousConvergence"]]
+        (divergence_type, PLCOpenParser.GetElementClass(divergence_type, "sfcObjects"))
+        for divergence_type in [
+            "selectionDivergence",
+            "simultaneousDivergence",
+            "selectionConvergence",
+            "simultaneousConvergence",
+        ]
+    ]
 
     def GetDivergenceType(self, divergence):
         for divergence_type, divergence_class in self.DivergenceTypes:
@@ -2538,29 +2884,45 @@ class PLCControler(object):
                 elif param == "connectors":
                     input_connectors = value["inputs"]
                     divergence_type = self.GetDivergenceType(divergence)
-                    if divergence_type in ["selectionDivergence", "simultaneousDivergence"]:
+                    if divergence_type in [
+                        "selectionDivergence",
+                        "simultaneousDivergence",
+                    ]:
                         position = input_connectors[0].GetRelPosition()
                         divergence.addconnectionPointIn()
-                        divergence.connectionPointIn.setrelPositionXY(position.x, position.y)
-                        self.SetConnectionWires(divergence.connectionPointIn, input_connectors[0])
+                        divergence.connectionPointIn.setrelPositionXY(
+                            position.x, position.y
+                        )
+                        self.SetConnectionWires(
+                            divergence.connectionPointIn, input_connectors[0]
+                        )
                     else:
                         divergence.setconnectionPointIn([])
                         for input_connector in input_connectors:
                             position = input_connector.GetRelPosition()
-                            connection = PLCOpenParser.CreateElement("connectionPointIn", divergence_type)
+                            connection = PLCOpenParser.CreateElement(
+                                "connectionPointIn", divergence_type
+                            )
                             divergence.appendconnectionPointIn(connection)
                             connection.setrelPositionXY(position.x, position.y)
                             self.SetConnectionWires(connection, input_connector)
                     output_connectors = value["outputs"]
-                    if divergence_type in ["selectionConvergence", "simultaneousConvergence"]:
+                    if divergence_type in [
+                        "selectionConvergence",
+                        "simultaneousConvergence",
+                    ]:
                         position = output_connectors[0].GetRelPosition()
                         divergence.addconnectionPointOut()
-                        divergence.connectionPointOut.setrelPositionXY(position.x, position.y)
+                        divergence.connectionPointOut.setrelPositionXY(
+                            position.x, position.y
+                        )
                     else:
                         divergence.setconnectionPointOut([])
                         for output_connector in output_connectors:
                             position = output_connector.GetRelPosition()
-                            connection = PLCOpenParser.CreateElement("connectionPointOut", divergence_type)
+                            connection = PLCOpenParser.CreateElement(
+                                "connectionPointOut", divergence_type
+                            )
                             divergence.appendconnectionPointOut(connection)
                             connection.setrelPositionXY(position.x, position.y)
 
@@ -2621,15 +2983,21 @@ class PLCControler(object):
                 elif param == "connector":
                     position = value.GetRelPosition()
                     actionBlock.addconnectionPointIn()
-                    actionBlock.connectionPointIn.setrelPositionXY(position.x, position.y)
+                    actionBlock.connectionPointIn.setrelPositionXY(
+                        position.x, position.y
+                    )
                     self.SetConnectionWires(actionBlock.connectionPointIn, value)
 
     def RemoveEditedElementInstance(self, tagname, id):
         element = self.GetEditedElement(tagname)
         if element is not None:
             instance = element.getinstance(id)
-            if isinstance(instance, PLCOpenParser.GetElementClass("block", "fbdObjects")):
-                self.RemoveEditedElementPouVar(tagname, instance.gettypeName(), instance.getinstanceName())
+            if isinstance(
+                instance, PLCOpenParser.GetElementClass("block", "fbdObjects")
+            ):
+                self.RemoveEditedElementPouVar(
+                    tagname, instance.gettypeName(), instance.getinstanceName()
+                )
             element.removeinstance(id)
 
     def GetEditedResourceVariables(self, tagname, debug=False):
@@ -2655,17 +3023,17 @@ class PLCControler(object):
                 new_task.setname(task["Name"])
                 if task["Triggering"] == "Interrupt":
                     new_task.setsingle(task["Single"])
-#                result = duration_model.match(task["Interval"]).groups()
-#                if reduce(lambda x, y: x or y != None, result):
-#                    values = []
-#                    for value in result[:-1]:
-#                        if value != None:
-#                            values.append(int(value))
-#                        else:
-#                            values.append(0)
-#                    if result[-1] is not None:
-#                        values.append(int(float(result[-1]) * 1000))
-#                    new_task.setinterval(datetime.time(*values))
+                #                result = duration_model.match(task["Interval"]).groups()
+                #                if reduce(lambda x, y: x or y != None, result):
+                #                    values = []
+                #                    for value in result[:-1]:
+                #                        if value != None:
+                #                            values.append(int(value))
+                #                        else:
+                #                            values.append(0)
+                #                    if result[-1] is not None:
+                #                        values.append(int(float(result[-1]) * 1000))
+                #                    new_task.setinterval(datetime.time(*values))
                 if task["Triggering"] == "Cyclic":
                     new_task.setinterval(task["Interval"])
                 new_task.setpriority(int(task["Priority"]))
@@ -2677,7 +3045,9 @@ class PLCControler(object):
                     new_instance = PLCOpenParser.CreateElement("pouInstance", "task")
                     task.appendpouInstance(new_instance)
                 else:
-                    new_instance = PLCOpenParser.CreateElement("pouInstance", "resource")
+                    new_instance = PLCOpenParser.CreateElement(
+                        "pouInstance", "resource"
+                    )
                     resource.appendpouInstance(new_instance)
                 new_instance.setname(instance["Name"])
                 new_instance.settypeName(instance["Type"])
@@ -2740,7 +3110,7 @@ class PLCControler(object):
     def OpenXMLFile(self, filepath):
         self.Project, error = LoadProject(filepath)
         if self.Project is None:
-            return "Project file syntax error:\n\n" + error
+            return f"Project file syntax error:\n\n{error}"
         self.SetFilePath(filepath)
         self.CreateProjectBuffer(True)
         self.ProgramChunks = []
@@ -2755,7 +3125,9 @@ class PLCControler(object):
         if not filepath and self.FilePath == "":
             return False
         else:
-            contentheader = {"modificationDateTime": datetime.datetime(*localtime()[:6])}
+            contentheader = {
+                "modificationDateTime": datetime.datetime(*localtime()[:6])
+            }
             self.Project.setcontentHeader(contentheader)
 
             if filepath:
@@ -2781,11 +3153,16 @@ class PLCControler(object):
         pou = self.GetEditedElement(tagname, debug)
         if pou is not None:
             search_results = pou.Search(criteria, [tagname])
-            if tagname.split("::")[0] in ['A', 'T']:
+            if tagname.split("::")[0] in ["A", "T"]:
                 parent_pou_tagname = "P::%s" % (tagname.split("::")[-2])
                 parent_pou = self.GetEditedElement(parent_pou_tagname, debug)
                 for infos, start, end, text in parent_pou.Search(criteria):
-                    if infos[1] in ["var_local", "var_input", "var_output", "var_inout"]:
+                    if infos[1] in [
+                        "var_local",
+                        "var_input",
+                        "var_output",
+                        "var_inout",
+                    ]:
                         search_results.append((infos, start, end, text))
             return search_results
         return []
