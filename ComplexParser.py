@@ -66,28 +66,14 @@ class ComplexParser:
                         f"Error: {STRUCT_TOKEN} found out of {TYPE_TOKEN} block declaration."
                     )
                 name = f"{line.split(':')[0].strip()}"
-                complex_vars.append((name, {}))
+                complex_vars.append((name, []))
                 parsing = True
                 continue
             elif f"END_{STRUCT_TOKEN}" in line:
                 parsing = False
                 continue
             elif parsing:
-                splitted_line = line.replace(":=", ":").split(":")
-                if len(splitted_line) == 3:
-                    # Handle complex variable with type and initial value
-                    name, type, value = (
-                        splitted_line[0].strip(),
-                        splitted_line[1].strip(),
-                        splitted_line[2].replace(";", "").strip(),
-                    )
-                    complex_vars[-1][1][name] = {"type": type, "value": value}
-                    continue
-                name, type = (
-                    splitted_line[0].strip(),
-                    splitted_line[1].replace(";", "").strip(),
-                )
-                complex_vars[-1][1][name] = {"type": type, "value": None}
+                complex_vars[-1][1].append(line)
                 continue
             # Remove type block if empty
             elif f"END_{TYPE_TOKEN}" in line:
@@ -96,7 +82,7 @@ class ComplexParser:
                     new_lines.pop()
                     continue
             # Skip consecutive empty lines
-            elif not l.strip() and not (new_lines and new_lines[-1].strip()):
+            elif not line and not (new_lines and new_lines[-1].strip()):
                 continue
 
             new_lines.append(l)

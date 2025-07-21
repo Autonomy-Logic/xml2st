@@ -1,11 +1,7 @@
 FUNCTION_BLOCK {{name}}
     VAR_INPUT
-        {%-for k,v in vars.items()%}
-        {%- if v.value is not none %}
-        {{k}} : {{v.type}} := {{v.value}};
-        {%- else %}
-        {{k}} : {{v.type}};
-        {%- endif %}
+        {%-for line in vars%}
+        {{line}}
         {%- endfor %}
     END_VAR
     VAR
