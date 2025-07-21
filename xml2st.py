@@ -5,6 +5,7 @@ import plcopen.plcopen as plcopen
 import PLCGenerator
 from PLCControler import PLCControler
 from ProjectController import ProjectController
+from ComplexParser import ComplexParser
 
 
 def compile_xml_to_st(xml_file_path):
@@ -56,6 +57,20 @@ def compile_xml_to_st(xml_file_path):
         sys.exit(1)
 
 
+def parse_complex_variables(st_file):
+    if not os.path.isfile(st_file) or not st_file.lower().endswith(".st"):
+        print(f"Error: Invalid file '{st_file}'. A path to a st file is expected.")
+        return None
+
+    parser = ComplexParser()
+    try:
+        complex_vars = parser.ParseSTFile(st_file)
+        return complex_vars
+    except Exception as e:
+        print(f"Error parsing ST file: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def generate_debugger_file(csv_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
         print(f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.")
@@ -101,6 +116,14 @@ def main():
 
             print("Saving ST file...")
 
+            st_file = os.path.abspath(args.generate_st).replace("plc.xml", "program.st")
+            with open(st_file, "w") as file:
+                file.write(program_text)
+
+            print("Parsing complex variables...")
+
+            parse_complex_variables(st_file)
+
         except Exception as e:
             print(f"Error generating ST file: {e}", file=sys.stderr)
             sys.exit(1)
@@ -119,6 +142,12 @@ def main():
 
             print("Saving files...")
 
+            st_file = os.path.abspath(args.generate_debug[0]).replace(
+                "plc.xml", "program.st"
+            )
+            with open(st_file, "w") as file:
+                file.write(program_text)
+
         except Exception as e:
             print(f"Error generating debug: {e}", file=sys.stderr)
             sys.exit(1)
@@ -126,12 +155,6 @@ def main():
     else:
         print("Error: No valid arguments provided. Use --help for usage information.")
         return
-
-    st_file = os.path.abspath(args.generate_st or args.generate_debug[0]).replace(
-        "plc.xml", "program.st"
-    )
-    with open(st_file, "w") as file:
-        file.write(program_text)
 
 
 if __name__ == "__main__":

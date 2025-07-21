@@ -17,7 +17,8 @@
                 "rainbow-panda.panda",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "mechatroner.rainbow-csv"
+                "mechatroner.rainbow-csv",
+                "Serhioromano.vscode-st"
             ]
         }
     },
