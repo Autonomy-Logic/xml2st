@@ -11,7 +11,8 @@ from ComplexParser import ComplexParser
 def compile_xml_to_st(xml_file_path):
     if not os.path.isfile(xml_file_path) or not xml_file_path.lower().endswith(".xml"):
         print(
-            f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected."
+            f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected.",
+            file=sys.stderr,
         )
         return
     print(f"Compiling file {xml_file_path}")
@@ -26,19 +27,19 @@ def compile_xml_to_st(xml_file_path):
     if result is not None:
         if isinstance(result, (tuple, list)) and len(result) == 2:
             (num, line) = result
-            print(f"PLC syntax error at line {num}:\n{line}")
+            print(f"PLC syntax error at line {num}:\n{line}", file=sys.stderr)
             return
         elif isinstance(result, str):
             print(result)
             return
         else:
-            print("Unknown error! Exiting...")
+            print("Unknown error! Exiting...", file=sys.stderr)
             return
 
     project_tree = plcopen.LoadProject(file_name)
 
     if project_tree is None or len(project_tree) < 2:
-        print(f"Error: Failed to load XML project file.")
+        print(f"Error: Failed to load XML project file.", file=sys.stderr)
         return
 
     project = project_tree[0]
@@ -59,7 +60,10 @@ def compile_xml_to_st(xml_file_path):
 
 def parse_complex_variables(st_file):
     if not os.path.isfile(st_file) or not st_file.lower().endswith(".st"):
-        print(f"Error: Invalid file '{st_file}'. A path to a st file is expected.")
+        print(
+            f"Error: Invalid file '{st_file}'. A path to a st file is expected.",
+            file=sys.stderr,
+        )
         return None
 
     parser = ComplexParser()
@@ -73,7 +77,10 @@ def parse_complex_variables(st_file):
 
 def generate_debugger_file(csv_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
-        print(f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.")
+        print(
+            f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.",
+            file=sys.stderr,
+        )
         return None, None
 
     controler = ProjectController()
@@ -153,7 +160,10 @@ def main():
             sys.exit(1)
 
     else:
-        print("Error: No valid arguments provided. Use --help for usage information.")
+        print(
+            "Error: No valid arguments provided. Use --help for usage information.",
+            file=sys.stderr,
+        )
         return
 
 

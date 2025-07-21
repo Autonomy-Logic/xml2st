@@ -60,7 +60,7 @@ class ComplexParser:
                     raise Exception(
                         f"Error: Nested {STRUCT_TOKEN} declaration found in ST file."
                     )
-                
+
                 if not type_declaration:
                     raise Exception(
                         f"Error: {STRUCT_TOKEN} found out of {TYPE_TOKEN} block declaration."
