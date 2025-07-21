@@ -45,38 +45,49 @@ class ComplexParser:
         with open(self.__stFile, "r") as f:
             lines = f.readlines()
 
-        parsing = []
         complex_vars = []
         new_lines = []
+        parsing = False
         type_declaration = False
 
         for l in lines:
             line = l.strip()
 
-            # Parsing is different inside TYPE block
             if line == TYPE_TOKEN:
                 type_declaration = True
-            elif f": {STRUCT_TOKEN}" in line:
-                name = f"{line.split(':')[0].strip()}"
-                type = f"{name.capitalize()}"
+            if f": {STRUCT_TOKEN}" in line:
                 if parsing:
-                    parsing[-1][1][name] = type
-                    parsing.append((type, {}))
-                    continue
-                parsing.append((name if type_declaration else type, {}))
-                if type_declaration:
-                    continue
-                l = f"{l.replace(STRUCT_TOKEN, type).rstrip()};\n"
-            elif f"END_{STRUCT_TOKEN}" in line and parsing[-1][1]:
-                complex_vars.append(parsing.pop())
+                    raise Exception(
+                        f"Error: Nested {STRUCT_TOKEN} declaration found in ST file."
+                    )
+                
+                if not type_declaration:
+                    raise Exception(
+                        f"Error: {STRUCT_TOKEN} found out of {TYPE_TOKEN} block declaration."
+                    )
+                name = f"{line.split(':')[0].strip()}"
+                complex_vars.append((name, {}))
+                parsing = True
+                continue
+            elif f"END_{STRUCT_TOKEN}" in line:
+                parsing = False
                 continue
             elif parsing:
-                splitted_line = line.split(":")
+                splitted_line = line.replace(":=", ":").split(":")
+                if len(splitted_line) == 3:
+                    # Handle complex variable with type and initial value
+                    name, type, value = (
+                        splitted_line[0].strip(),
+                        splitted_line[1].strip(),
+                        splitted_line[2].replace(";", "").strip(),
+                    )
+                    complex_vars[-1][1][name] = {"type": type, "value": value}
+                    continue
                 name, type = (
                     splitted_line[0].strip(),
                     splitted_line[1].replace(";", "").strip(),
                 )
-                parsing[-1][1][name] = type
+                complex_vars[-1][1][name] = {"type": type, "value": None}
                 continue
             # Remove type block if empty
             elif f"END_{TYPE_TOKEN}" in line:
