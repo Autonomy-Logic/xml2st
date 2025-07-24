@@ -1,5 +1,4 @@
-import os
-import traceback
+import traceback, os
 from jinja2 import Environment, FileSystemLoader
 from runtime.typemapping import DebugTypesSize
 import util.paths as paths
@@ -8,7 +7,9 @@ import util.paths as paths
 class ProjectController:
 
     def __init__(self):
-
+        self.__loader = FileSystemLoader(
+            os.path.join(paths.AbsDir(__file__), "templates")
+        )
         self.ResetIECProgramsAndVariables()
 
     def SetCSVFile(self, filename):
@@ -160,8 +161,7 @@ class ProjectController:
     def Generate_embedded_plc_debugger(self):
         dvars, externs, enums = self.Generate_plc_debug_cvars()
 
-        loader = FileSystemLoader(os.path.join(paths.AbsDir(__file__)))
-        template = Environment(loader=loader).get_template("debug.c.j2")
+        template = Environment(loader=self.__loader).get_template("debug.c.j2")
         cfile = os.path.join(paths.AbsDir(self._csvfile), "debug.c")
         debug_text = template.render(
             debug={
