@@ -36,7 +36,7 @@ class ComplexParser:
         """
 
         if not file:
-            raise Exception("ST file not valid. Please ")
+            raise Exception("ST file not valid. Please provide a valid ST file path.")
 
         self.__stFile = file
 
