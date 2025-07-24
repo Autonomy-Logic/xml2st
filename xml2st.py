@@ -88,14 +88,15 @@ def generate_debugger_file(csv_file):
     return controler.Generate_embedded_plc_debugger()[1]
 
 
-def append_debugger_to_st(program_text, debug_text):
+def append_debugger_to_st(st_file, debug_text):
     # Wrap debugger code around (* comments *)
     c_debug_lines = debug_text.split("\n")
     c_debug = [f"(*DBG:{line}*)" for line in c_debug_lines]
     c_debug = "\n".join(c_debug)
 
-    # Concatenate debugger code with st program
-    return f"{program_text}\n{c_debug}"
+    with open(st_file, "a") as f:
+        f.write("\n")
+        f.write(c_debug)
 
 
 def main():
@@ -106,9 +107,9 @@ def main():
     parser.add_argument(
         "--generate-debug",
         nargs=2,
-        metavar=("XML_FILE", "CSV_FILE"),
+        metavar=("ST_FILE", "CSV_FILE"),
         type=str,
-        help="Paths to the XML file and the variables CSV file",
+        help="Paths to the ST file and the variables CSV file",
     )
 
     args = parser.parse_args()
@@ -137,23 +138,11 @@ def main():
 
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
-            program_text = compile_xml_to_st(args.generate_debug[0])
-
-            if program_text is None:
-                # This exception will always be caught
-                raise Exception("Compilation failed, no program text generated.")
+            parse_complex_variables(args.generate_debug[0])
 
             debug_text = generate_debugger_file(args.generate_debug[1])
 
-            program_text = append_debugger_to_st(program_text, debug_text)
-
-            print("Saving files...")
-
-            st_file = os.path.abspath(args.generate_debug[0]).replace(
-                "plc.xml", "program.st"
-            )
-            with open(st_file, "w") as file:
-                file.write(program_text)
+            append_debugger_to_st(args.generate_debug[0], debug_text)
 
         except Exception as e:
             print(f"Error generating debug: {e}", file=sys.stderr)

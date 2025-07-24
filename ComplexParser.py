@@ -24,8 +24,7 @@ class ComplexParser:
         for var in complex_vars:
             program_text += f"{template.render(name=var[0], vars=var[1])}\n\n"
         program_text += "".join(lines)
-        file_name = f"processed_{os.path.basename(self.__stFile)}"
-        with open(os.path.join(paths.AbsDir(self.__stFile), file_name), "w") as f:
+        with open(self.__stFile, "w") as f:
             f.write(program_text)
 
         return program_text
