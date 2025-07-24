@@ -39,7 +39,7 @@ def compile_xml_to_st(xml_file_path):
     project_tree = plcopen.LoadProject(file_name)
 
     if project_tree is None or len(project_tree) < 2:
-        print(f"Error: Failed to load XML project file.", file=sys.stderr)
+        print("Error: Failed to load XML project file.", file=sys.stderr)
         return
 
     project = project_tree[0]

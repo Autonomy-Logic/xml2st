@@ -50,8 +50,8 @@ class ComplexParser:
         parsing = False
         type_declaration = False
 
-        for l in lines:
-            line = l.strip()
+        for line_text in lines:
+            line = line_text.strip()
 
             if line == TYPE_TOKEN:
                 type_declaration = True
@@ -85,6 +85,6 @@ class ComplexParser:
             elif not line and not (new_lines and new_lines[-1].strip()):
                 continue
 
-            new_lines.append(l)
+            new_lines.append(line_text)
 
         return self.__rewriteSTFile(new_lines, complex_vars)
