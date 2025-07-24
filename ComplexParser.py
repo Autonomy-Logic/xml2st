@@ -78,7 +78,7 @@ class ComplexParser:
             # Remove type block if empty
             elif f"END_{TYPE_TOKEN}" in line:
                 type_declaration = False
-                if TYPE_TOKEN in new_lines[-1]:
+                if new_lines and TYPE_TOKEN in new_lines[-1]:
                     new_lines.pop()
                     continue
             # Skip consecutive empty lines
