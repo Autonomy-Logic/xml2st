@@ -1,7 +1,20 @@
 import os, re
 from jinja2 import Environment, FileSystemLoader
 from util import paths
-from STParser import *
+from STParser import (
+    TYPE,
+    FUNCTION_BLOCK,
+    PROGRAM,
+    CONFIGURATION,
+    RESOURCE,
+    STRUCT,
+    ARRAY,
+    VARIABLE,
+    PROGRAM_DEFINITION,
+    ALL_BLOCKS,
+    CLOSABLE_BLOCKS,
+    BASE_TYPES,
+)
 
 ## GLOABL VARIABLES
 
@@ -295,7 +308,7 @@ class ComplexParser:
         for block in [
             b
             for b in self.blocks
-            if (b.type != STRUCT.name or block.name not in self.complex_types)
+            if (b.type != STRUCT.name or b.name not in self.complex_types)
         ]:
             lines.extend(self.__getBlockLines(block))
         return lines

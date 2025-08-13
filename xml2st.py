@@ -58,22 +58,6 @@ def compile_xml_to_st(xml_file_path):
         sys.exit(1)
 
 
-def parse_complex_variables(st_file):
-    if not os.path.isfile(st_file) or not st_file.lower().endswith(".st"):
-        print(
-            f"Error: Invalid file '{st_file}'. A path to a st file is expected.",
-            file=sys.stderr,
-        )
-        return None
-
-    parser = ComplexParser()
-    try:
-        parser.ParseSTFile(st_file)
-    except Exception as e:
-        print(f"Error parsing ST file: {e}", file=sys.stderr)
-        sys.exit(1)
-
-
 def generate_debugger_file(csv_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
         print(

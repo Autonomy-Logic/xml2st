@@ -1,21 +1,5 @@
 import re
 
-# Define module * exports
-__all__ = [
-    "TYPE",
-    "FUNCTION_BLOCK",
-    "PROGRAM",
-    "CONFIGURATION",
-    "RESOURCE",
-    "STRUCT",
-    "ARRAY",
-    "VARIABLE",
-    "PROGRAM_DEFINITION",
-    "ALL_BLOCKS",
-    "CLOSABLE_BLOCKS",
-    "BASE_TYPES",
-]
-
 BASE_TYPES = [
     "BOOL",
     "INT",
@@ -103,7 +87,7 @@ class _ArrayType(_DataType):
             r"(?P<start>-?\d+)\s*\.\.\s*(?P<end>-?\d+)"
             r"\]\s*OF\s*"
             r"(?P<type>[A-Za-z_][A-Za-z0-9_]*)"
-            r"\s*;"
+            r"\s*;\s*$"
         )
 
     def GetInfo(self, line):
