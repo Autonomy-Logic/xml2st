@@ -11,6 +11,7 @@ CSV_VARS_TEMPLATE = "variable_declaration.csv.j2"
 
 ## CUSTOM CLASSES FOR BLOCK INSTANCES
 
+
 class _InsertLine:
     def __init__(self, index):
         self.index = index
@@ -108,7 +109,9 @@ class _StructInstance(_NamedBlockInstance):
         if self.simple and hasattr(block, "simple"):
             self.simple = block.simple
 
+
 ## MAIN COMPLEX PARSER CLASS
+
 
 class ComplexParser:
 
@@ -321,7 +324,7 @@ class ComplexParser:
             if custom_type.name == type_name:
                 return custom_type
         return None
-    
+
     def __getFunctionBlock(self, name):
         """
         Get the function block by its name.
@@ -330,7 +333,7 @@ class ComplexParser:
             if block.name == name:
                 return block
         return None
-    
+
     def __spreadDeclarations(self, block, prefix="", write_base_types=True):
         """
         Spread the declarations of the block.
@@ -339,7 +342,9 @@ class ComplexParser:
             for i in range(block.start, block.end + 1):
                 index_prefix = f"{prefix}.table[{i}]"
                 if block.data_type in BASE_TYPES:
-                    self.csv_vars.append({"name": index_prefix, "type": block.data_type})
+                    self.csv_vars.append(
+                        {"name": index_prefix, "type": block.data_type}
+                    )
                 else:
                     type = self.__getCustomType(block.data_type)
                     if type:
@@ -356,30 +361,34 @@ class ComplexParser:
                 function_block = self.__getFunctionBlock(block.data_type)
                 if function_block:
                     for inner_block in function_block.inner_blocks:
-                        self.__spreadDeclarations(inner_block, prefix=prefix, write_base_types=False)
+                        self.__spreadDeclarations(
+                            inner_block, prefix=prefix, write_base_types=False
+                        )
         elif block.type == STRUCT.name:
             for inner_block in block.inner_blocks:
                 if isinstance(inner_block, _VariableInstance):
                     self.__spreadDeclarations(inner_block, prefix=prefix)
 
     def __addVarDeclarations(self, program, prefix=""):
-        program_block = next(
-            (p for p in self.programs if p.name == program), None
-        )
+        program_block = next((p for p in self.programs if p.name == program), None)
         if program_block:
             for block in program_block.inner_blocks:
                 if isinstance(block, _VariableInstance):
                     self.__spreadDeclarations(block, prefix)
-                    
+
     def __findProgramInstances(self):
         """
         Find program instances in the ST file.
         """
         for block in self.blocks:
             if block.type == CONFIGURATION.name:
-                for resource in filter(lambda x: x.type == RESOURCE.name, block.inner_blocks):
+                for resource in filter(
+                    lambda x: x.type == RESOURCE.name, block.inner_blocks
+                ):
                     program_instances = [
-                        PROGRAM_DEFINITION.GetInfo(line) for line in resource.lines if PROGRAM_DEFINITION.GetInfo(line)
+                        PROGRAM_DEFINITION.GetInfo(line)
+                        for line in resource.lines
+                        if PROGRAM_DEFINITION.GetInfo(line)
                     ]
                     for program_instance in program_instances:
                         prefix = f"{block.name.upper()}.{resource.name.upper()}.{program_instance['instance'].upper()}"
@@ -388,10 +397,6 @@ class ComplexParser:
     def __appendVarsToCSV(self, csv_file):
         """
         Append new variable lines before the Ticktime section using regex matching.
-        
-        :param content: Original file content as a string.
-        :param new_vars: List of variable lines (strings) to append.
-        :return: Modified file content with new variables inserted before Ticktime.
         """
 
         content = []
@@ -410,30 +415,30 @@ class ComplexParser:
 
         if ticktime_idx is None:
             raise ValueError("Ticktime section not found in lines.")
-        
+
         while ticktime_idx >= 1 and EMPTY_LINE.match(content[ticktime_idx - 1]):
             ticktime_idx -= 1
 
         last_var_number = -1
 
         if ticktime_idx > 0:
-            extracted_var_number = var_number_pattern.match(content[ticktime_idx - 1]).group(1)
+            extracted_var_number = var_number_pattern.match(
+                content[ticktime_idx - 1]
+            ).group(1)
             if extracted_var_number:
                 last_var_number = int(extracted_var_number)
 
-        template = Environment(loader=self.__loader).get_template(
-            CSV_VARS_TEMPLATE
-        )
+        template = Environment(loader=self.__loader).get_template(CSV_VARS_TEMPLATE)
 
         formatted_vars = []
         for var in self.csv_vars:
             last_var_number += 1
-            formatted_vars.append(
-                f"{template.render(i=last_var_number, var=var)}\n"
-            )
+            formatted_vars.append(f"{template.render(i=last_var_number, var=var)}\n")
 
         with open(csv_file, "w") as f:
-            f.writelines(content[:ticktime_idx] + formatted_vars + [""] + content[ticktime_idx:])
+            f.writelines(
+                content[:ticktime_idx] + formatted_vars + [""] + content[ticktime_idx:]
+            )
 
         return content[:ticktime_idx] + formatted_vars + [""] + content[ticktime_idx:]
 

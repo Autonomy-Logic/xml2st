@@ -118,6 +118,7 @@ class _ArrayType(_DataType):
             }
         return None
 
+
 class _ProgramDefinition(_NamedBlock):
     def __init__(self):
         super().__init__("program_definition")

@@ -139,7 +139,9 @@ def main():
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
             complex_parser = ComplexParser()
-            complex_parser.AddComplexVars(args.generate_debug[0], args.generate_debug[1])
+            complex_parser.AddComplexVars(
+                args.generate_debug[0], args.generate_debug[1]
+            )
 
             debug_text = generate_debugger_file(args.generate_debug[1])
 
