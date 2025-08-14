@@ -58,7 +58,7 @@ def compile_xml_to_st(xml_file_path):
         sys.exit(1)
 
 
-def generate_debugger_file(csv_file):
+def generate_debugger_file(csv_file, st_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
         print(
             f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.",
@@ -68,11 +68,10 @@ def generate_debugger_file(csv_file):
 
     controler = ProjectController()
     controler.SetCSVFile(csv_file)
-    return controler.Generate_embedded_plc_debugger()[1]
+    return controler.Generate_embedded_plc_debugger(st_file)[1]
 
 
 def append_debugger_to_st(st_file, debug_text):
-    # Wrap debugger code around (* comments *)
     c_debug_lines = debug_text.split("\n")
     c_debug = [f"(*DBG:{line}*)" for line in c_debug_lines]
     c_debug = "\n".join(c_debug)
@@ -127,7 +126,9 @@ def main():
                 args.generate_debug[0], args.generate_debug[1]
             )
 
-            debug_text = generate_debugger_file(args.generate_debug[1])
+            debug_text = generate_debugger_file(
+                args.generate_debug[1], args.generate_debug[0]
+            )
 
             append_debugger_to_st(args.generate_debug[0], debug_text)
 
