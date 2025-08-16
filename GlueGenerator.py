@@ -32,35 +32,35 @@ class GlueGenerator:
 
         if kind == 'I':
             if sub == 'X':
-                return f"bool_input[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
+                return f"bool_input_ptr[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
             elif sub == 'B':
-                return f"byte_input[{pos1}] = (IEC_BYTE *){varName};"
+                return f"byte_input_ptr[{pos1}] = (IEC_BYTE *){varName};"
             elif sub == 'W':
-                return f"int_input[{pos1}] = (IEC_UINT *){varName};"
+                return f"int_input_ptr[{pos1}] = (IEC_UINT *){varName};"
             elif sub == 'D':
-                return f"dint_input[{pos1}] = (IEC_UDINT *){varName};"
+                return f"dint_input_ptr[{pos1}] = (IEC_UDINT *){varName};"
             elif sub == 'L':
-                return f"lint_input[{pos1}] = (IEC_ULINT *){varName};"
+                return f"lint_input_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
         elif kind == 'Q':
             if sub == 'X':
-                return f"bool_output[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
+                return f"bool_output_ptr[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
             elif sub == 'B':
-                return f"byte_output[{pos1}] = (IEC_BYTE *){varName};"
+                return f"byte_output_ptr[{pos1}] = (IEC_BYTE *){varName};"
             elif sub == 'W':
-                return f"int_output[{pos1}] = (IEC_UINT *){varName};"
+                return f"int_output_ptr[{pos1}] = (IEC_UINT *){varName};"
             elif sub == 'D':
-                return f"dint_output[{pos1}] = (IEC_UDINT *){varName};"
+                return f"dint_output_ptr[{pos1}] = (IEC_UDINT *){varName};"
             elif sub == 'L':
-                return f"lint_output[{pos1}] = (IEC_ULINT *){varName};"
+                return f"lint_output_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
         elif kind == 'M':
             if sub == 'W':
-                return f"int_memory[{pos1}] = (IEC_UINT *){varName};"
+                return f"int_memory_ptr[{pos1}] = (IEC_UINT *){varName};"
             elif sub == 'D':
-                return f"dint_memory[{pos1}] = (IEC_UDINT *){varName};"
+                return f"dint_memory_ptr[{pos1}] = (IEC_UDINT *){varName};"
             elif sub == 'L':
-                return f"lint_memory[{pos1}] = (IEC_ULINT *){varName};"
+                return f"lint_memory_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
         raise Exception(f"Unhandled variable type: {varName}")
 
