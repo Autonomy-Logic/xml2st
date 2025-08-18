@@ -1890,7 +1890,7 @@ class PouProgramGenerator(object):
                 else:
                     paths.append(variable)
             elif isinstance(next, CoilClass):
-                paths.append(
+                paths.extend(
                     self.GeneratePaths(
                         next.connectionPointIn.getconnections(), body, order
                     )
