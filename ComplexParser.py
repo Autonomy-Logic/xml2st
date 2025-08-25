@@ -347,13 +347,13 @@ class ComplexParser:
                 return block
         return None
 
-    def __spreadDeclarations(self, block, prefix="", write_base_types=True):
+    def __spreadDeclarations(self, block, prefix="", write_base_types=True, raw_type=False):
         """
         Spread the declarations of the block.
         """
         if block.type == ARRAY.name:
-            for i in range(block.start, block.end + 1):
-                index_prefix = f"{prefix}.table[{i}]"
+            for i in range(0, block.end + 1 - block.start):
+                index_prefix = f"{prefix}.table[{i}]" if raw_type else f"{prefix}.{block.name.upper()}.table[{i}]"
                 if block.data_type in BASE_TYPES:
                     self.csv_vars.append(
                         {"name": index_prefix, "type": block.data_type}
@@ -369,7 +369,7 @@ class ComplexParser:
             elif block.data_type in [b.name for b in self.simple_types]:
                 type = self.__getCustomType(block.data_type)
                 if type:
-                    self.__spreadDeclarations(type, prefix=prefix)
+                    self.__spreadDeclarations(type, prefix=prefix, raw_type=True)
             elif block.data_type in [b.name for b in self.function_blocks]:
                 function_block = self.__getFunctionBlock(block.data_type)
                 if function_block:
