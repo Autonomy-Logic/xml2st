@@ -39,6 +39,12 @@ extern unsigned long long common_ticktime__;
         IEC_UINT *int_input[MAX_ANALOG_INPUT];
         IEC_UINT *int_output[MAX_ANALOG_OUTPUT];
 
+        // Match pointer names with Linux version
+        static IEC_BOOL *(*bool_input_ptr)[8] = bool_input;
+        static IEC_BOOL *(*bool_output_ptr)[8] = bool_output;
+        static IEC_UINT *(*int_input_ptr) = int_input;
+        static IEC_UINT *(*int_output_ptr) = int_output;
+
     #else
 
         #define MAX_DIGITAL_INPUT          56
@@ -57,7 +63,17 @@ extern unsigned long long common_ticktime__;
         IEC_UDINT *dint_memory[MAX_MEMORY_DWORD];
         IEC_ULINT *lint_memory[MAX_MEMORY_LWORD];
 
+        // Match pointer names with Linux version
+        static IEC_BOOL *(*bool_input_ptr)[8] = bool_input;
+        static IEC_BOOL *(*bool_output_ptr)[8] = bool_output;
+        static IEC_UINT *(*int_input_ptr) = int_input;
+        static IEC_UINT *(*int_output_ptr) = int_output;
+        static IEC_UINT *(*int_memory_ptr) = int_memory;
+        static IEC_UDINT *(*dint_memory_ptr) = dint_memory;
+        static IEC_ULINT *(*lint_memory_ptr) = lint_memory;
+
     #endif
+
 
 #else
 
