@@ -6,6 +6,7 @@ import PLCGenerator
 from PLCControler import PLCControler
 from ProjectController import ProjectController
 from ComplexParser import ComplexParser
+from GlueGenerator import GlueGenerator
 
 
 def compile_xml_to_st(xml_file_path):
@@ -80,18 +81,56 @@ def append_debugger_to_st(st_file, debug_text):
         f.write("\n")
         f.write(c_debug)
 
+def generate_gluevars(located_vars_file):
+    if not os.path.isfile(located_vars_file) or not located_vars_file.lower().endswith(".h"):
+        print(
+            f"Error: Invalid file '{located_vars_file}'. A path to a LOCATED_VARIABLES.h file is expected.",
+            file=sys.stderr,
+        )
+        return None
+    
+    # Read the LOCATED_VARIABLES.h file
+    with open(located_vars_file, "r") as f:
+        located_vars = f.readlines()
+
+    # Create an instance of GlueGenerator
+    generator = GlueGenerator()
+    glueVars = generator.generate_glue_variables(located_vars)
+
+    if glueVars is None:
+        print("Error: Failed to generate glue variables.", file=sys.stderr)
+        return None
+
+    # Save the generated glue variables to a file
+    glue_vars_file = os.path.join(os.path.dirname(located_vars_file), "glueVars.c")
+    with open(glue_vars_file, "w") as f:
+        f.write(glueVars)
+
+    # Print success message
+    print(f"Glue variables saved to {glue_vars_file}")
 
 def main():
     parser = argparse.ArgumentParser(
         description="Process a PLCopen XML file and transpiles it into a Structured Text (ST) program."
     )
-    parser.add_argument("--generate-st", type=str, help="The path to the XML file")
+    parser.add_argument(
+        "--generate-st", 
+        metavar=("XML_FILE"), 
+        type=str, 
+        help="The path to the XML file"
+    )
     parser.add_argument(
         "--generate-debug",
         nargs=2,
         metavar=("ST_FILE", "CSV_FILE"),
         type=str,
         help="Paths to the ST file and the variables CSV file",
+    )
+    parser.add_argument(
+        "--generate-gluevars", 
+        metavar=("LOCATED_VARS_FILE"), 
+        type=str, 
+        help="The path to the LOCATED_VARIABLES.h file"
     )
 
     args = parser.parse_args()
@@ -134,6 +173,15 @@ def main():
 
         except Exception as e:
             print(f"Error generating debug: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif args.generate_gluevars:
+        try:
+            print("Generating glue variables...")
+            generate_gluevars(args.generate_gluevars)
+
+        except Exception as e:
+            print(f"Error generating glue variables: {e}", file=sys.stderr)
             sys.exit(1)
 
     else:
