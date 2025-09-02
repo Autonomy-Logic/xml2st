@@ -87,6 +87,7 @@ class _ArrayType(_DataType):
             r"(?P<start>-?\d+)\s*\.\.\s*(?P<end>-?\d+)"
             r"\]\s*OF\s*"
             r"(?P<type>[A-Za-z_][A-Za-z0-9_]*)"
+            r"(?:\s*:=\s*(?P<value>[^;]+))?"  # optional := value
             r"\s*;\s*$"
         )
 

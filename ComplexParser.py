@@ -136,8 +136,8 @@ class ComplexParser:
         self.structs = []
         self.programs = []
         self.csv_vars = []
-        self.simple_types = []
-        self.complex_types = []
+        self.array_dependant = []
+        self.array_dependant_names = []
         self.complex_structs = []
         self.function_blocks = []
         self.__loader = FileSystemLoader(
@@ -153,8 +153,8 @@ class ComplexParser:
         self.structs = []
         self.programs = []
         self.csv_vars = []
-        self.simple_types = []
-        self.complex_types = []
+        self.array_dependant = []
+        self.array_dependant_names = []
         self.complex_structs = []
         self.function_blocks = []
 
@@ -211,12 +211,18 @@ class ComplexParser:
         else:
             return _BlockInstance(info["type"])
 
-    def __getBlockLines(self, block):
+    def __getBlockLines(self, block, ignoreComplexStructs=True):
         """
         Get the lines of the block.
         """
 
         lines = []
+        if (
+            ignoreComplexStructs
+            and isinstance(block, _StructInstance)
+            and block.name not in self.array_dependant
+        ):
+            return []
         for line in block.lines:
             if isinstance(line, _InsertLine):
                 lines.extend(self.__getBlockLines(block.inner_blocks[line.index]))
@@ -225,46 +231,45 @@ class ComplexParser:
 
         return lines
 
+    def __isBlockAnArrayType(self, block):
+        for a in self.arrays:
+            if block.name == a.data_type:
+                return True
+        return False
+
     def __analyseTypes(self, block):
         """
-        Separate custom defined types into simple and complex types.
+        Separate structs that have to be manually parsed
         """
-        changes = [b for b in block.inner_blocks if b.simple]
-        self.simple_types.extend(changes)
 
-        simple_types_names = [s.name for s in self.simple_types]
+        changes = [b for b in block.inner_blocks if self.__isBlockAnArrayType(b)]
 
-        complex_blocks = [b for b in block.inner_blocks if not b.simple]
+        for c in changes:
+            self.__checkSubtypes(c, block.inner_blocks)
 
-        while changes:
-            changes = False
-            complex_blocks_copy = complex_blocks.copy()
-            complex_blocks = []
-            for complex_block in complex_blocks_copy:
-                if isinstance(complex_block, _VariableInstance):
-                    complex_block.simple = complex_block.data_type in simple_types_names
-                    if complex_block.simple:
-                        changes = True
-                        self.simple_types.append(complex_block)
-                        simple_types_names.append(complex_block.name)
-                    else:
-                        complex_blocks.append(complex_block)
-                elif isinstance(complex_block, _StructInstance):
-                    for inner_block in [
-                        i for i in complex_block.inner_blocks if not i.simple
-                    ]:
-                        if inner_block.data_type not in simple_types_names:
-                            complex_blocks.append(complex_block)
-                            break
-                    else:
-                        complex_block.simple = True
-                        self.simple_types.append(complex_block)
-                        changes = True
+        self.array_dependant_names = list(set(self.array_dependant_names))
 
-        self.complex_types.extend([b.name for b in complex_blocks])
-        self.complex_structs.extend(
-            [b for b in complex_blocks if isinstance(b, _StructInstance)]
-        )
+        complex_blocks = [
+            b for b in block.inner_blocks if b.name not in self.array_dependant_names
+        ]
+        self.complex_structs = [
+            b for b in complex_blocks if isinstance(b, _StructInstance)
+        ]
+
+    def __checkSubtypes(self, subtype, blocks):
+        if isinstance(subtype, _StructInstance):
+            self.array_dependant.append(subtype)
+            self.array_dependant_names.append(subtype.name)
+            for inner_block in subtype.inner_blocks:
+                block = self.__findBlock(inner_block, blocks)
+                if block:
+                    self.__checkSubtypes(block, blocks)
+
+    def __findBlock(self, block, block_list):
+        for b in block_list:
+            if b.name == block.data_type:
+                return b
+        return None
 
     def __separateOuterBlocks(self):
         """
@@ -275,7 +280,6 @@ class ComplexParser:
             if block.type == TYPE.name:
                 self.__analyseTypes(block)
             elif block.type == FUNCTION_BLOCK.name:
-                self.complex_types.append(block.name)
                 self.function_blocks.append(block)
             elif block.type == PROGRAM.name:
                 self.programs.append(block)
@@ -305,27 +309,41 @@ class ComplexParser:
         Get the ST file content as a string.
         """
         lines = []
-        for block in [
-            b
-            for b in self.blocks
-            if (b.type != STRUCT.name or b.name not in self.complex_types)
-        ]:
-            lines.extend(self.__getBlockLines(block))
+        for block in [b for b in self.blocks]:
+            if block.type == TYPE.name:
+                for inner_block in block.inner_blocks:
+                    if (
+                        not isinstance(inner_block, _StructInstance)
+                        or inner_block.name in self.array_dependant_names
+                    ):
+                        break
+                else:
+                    lines.append(self.__rewriteStuctsAsFunctionBlocks())
+                    continue
+                lines.extend(self.__getBlockLines(block))
+                lines.append(self.__rewriteStuctsAsFunctionBlocks())
+            else:
+                lines.extend(self.__getBlockLines(block))
         return lines
 
-    def __rewriteSTWithComplexStructs(self):
-        """
-        Rewrite the ST file with complex variables.
-        """
+    def __rewriteStuctsAsFunctionBlocks(self):
         template = Environment(loader=self.__loader).get_template(
             FUNCTION_BLOCK_ST_TEMPLATE
         )
         program_text = ""
         for struct in self.complex_structs:
-            lines = [l.strip() for l in self.__getBlockLines(struct)[1:-1]]
+            lines = [l.strip() for l in self.__getBlockLines(struct, False)[1:-1]]
             program_text += f"{template.render(name=struct.name, vars=lines)}\n\n"
+
+        return program_text
+
+    def __rewriteSTWithComplexStructs(self):
+        """
+        Rewrite the ST file with complex variables.
+        """
+        program_text = "".join(self.__getSTLines())
         with open(self.__stFile, "w") as f:
-            f.write(program_text + "".join(self.__getSTLines()))
+            f.write(program_text)
 
         return program_text
 
@@ -333,7 +351,7 @@ class ComplexParser:
         """
         Get the complex type by its name.
         """
-        for custom_type in self.simple_types:
+        for custom_type in self.array_dependant:
             if custom_type.name == type_name:
                 return custom_type
         return None
@@ -347,47 +365,65 @@ class ComplexParser:
                 return block
         return None
 
-    def __spreadDeclarations(self, block, prefix="", write_base_types=True, raw_type=False):
+    def __spreadDeclarations(
+        self, block, prefix="", write_base_types=True, raw_type=False, value_added=False
+    ):
         """
         Spread the declarations of the block.
         """
         if block.type == ARRAY.name:
+            array_prefix = prefix
+            if not raw_type:
+                array_prefix = f"{array_prefix}.{block.name.upper()}"
+            if not value_added:
+                array_prefix = f"{array_prefix}.value"
             for i in range(0, block.end + 1 - block.start):
-                index_prefix = f"{prefix}.table[{i}]" if raw_type else f"{prefix}.{block.name.upper()}.table[{i}]"
+                indexed_prefix = f"{array_prefix}.table[{i}]"
                 if block.data_type in BASE_TYPES:
                     self.csv_vars.append(
-                        {"name": index_prefix, "type": block.data_type}
+                        {"name": indexed_prefix, "type": block.data_type}
                     )
                 else:
                     type = self.__getCustomType(block.data_type)
                     if type:
-                        self.__spreadDeclarations(type, prefix=index_prefix)
+                        self.__spreadDeclarations(
+                            type, prefix=indexed_prefix, value_added=True
+                        )
         elif block.type == VARIABLE.name:
             prefix = f"{prefix}.{block.name.upper()}"
             if block.data_type in BASE_TYPES and write_base_types:
                 self.csv_vars.append({"name": prefix, "type": block.data_type})
-            elif block.data_type in [b.name for b in self.simple_types]:
+            elif block.data_type in self.array_dependant_names:
                 type = self.__getCustomType(block.data_type)
                 if type:
-                    self.__spreadDeclarations(type, prefix=prefix, raw_type=True)
+                    self.__spreadDeclarations(
+                        type, prefix=prefix, raw_type=True, value_added=value_added
+                    )
             elif block.data_type in [b.name for b in self.function_blocks]:
                 function_block = self.__getFunctionBlock(block.data_type)
                 if function_block:
                     for inner_block in function_block.inner_blocks:
                         self.__spreadDeclarations(
-                            inner_block, prefix=prefix, write_base_types=False
+                            inner_block,
+                            prefix=prefix,
+                            write_base_types=False,
+                            value_added=value_added,
                         )
         elif block.type == STRUCT.name:
+            if not value_added:
+                prefix = f"{prefix}.value"
             for inner_block in block.inner_blocks:
                 if isinstance(inner_block, _VariableInstance):
-                    self.__spreadDeclarations(inner_block, prefix=prefix)
+                    self.__spreadDeclarations(
+                        inner_block, prefix=prefix, value_added=True
+                    )
 
     def __addVarDeclarations(self, program, prefix=""):
         program_block = next((p for p in self.programs if p.name == program), None)
         if program_block:
             for block in program_block.inner_blocks:
                 if isinstance(block, _VariableInstance):
-                    self.__spreadDeclarations(block, prefix)
+                    self.__spreadDeclarations(block, prefix, write_base_types=False)
 
     def __findProgramInstances(self):
         """
