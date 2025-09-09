@@ -220,7 +220,7 @@ class ComplexParser:
         if (
             ignoreComplexStructs
             and isinstance(block, _StructInstance)
-            and block.name not in self.array_dependant
+            and block.name not in self.array_dependant_names
         ):
             return []
         for line in block.lines:
@@ -318,15 +318,15 @@ class ComplexParser:
                     ):
                         break
                 else:
-                    lines.append(self.__rewriteStuctsAsFunctionBlocks())
+                    lines.append(self.__rewriteStructsAsFunctionBlocks())
                     continue
                 lines.extend(self.__getBlockLines(block))
-                lines.append(self.__rewriteStuctsAsFunctionBlocks())
+                lines.append(self.__rewriteStructsAsFunctionBlocks())
             else:
                 lines.extend(self.__getBlockLines(block))
         return lines
 
-    def __rewriteStuctsAsFunctionBlocks(self):
+    def __rewriteStructsAsFunctionBlocks(self):
         template = Environment(loader=self.__loader).get_template(
             FUNCTION_BLOCK_ST_TEMPLATE
         )

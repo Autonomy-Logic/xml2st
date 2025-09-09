@@ -2,14 +2,25 @@ import re
 
 BASE_TYPES = [
     "BOOL",
+    "SINT",
     "INT",
     "DINT",
+    "LINT",
+    "USINT",
+    "UINT",
+    "UDINT",
+    "ULINT",
     "REAL",
-    "STRING",
+    "LREAL",
     "TIME",
     "DATE",
-    "TIME_OF_DAY",
-    "DATE_AND_TIME",
+    "TOD",
+    "DT",
+    "STRING",
+    "BYTE",
+    "WORD",
+    "DWORD",
+    "LWORD"
 ]
 
 
