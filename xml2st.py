@@ -59,23 +59,6 @@ def compile_xml_to_st(xml_file_path):
         sys.exit(1)
 
 
-def parse_complex_variables(st_file):
-    if not os.path.isfile(st_file) or not st_file.lower().endswith(".st"):
-        print(
-            f"Error: Invalid file '{st_file}'. A path to a st file is expected.",
-            file=sys.stderr,
-        )
-        return None
-
-    parser = ComplexParser()
-    try:
-        complex_vars = parser.ParseSTFile(st_file)
-        return complex_vars
-    except Exception as e:
-        print(f"Error parsing ST file: {e}", file=sys.stderr)
-        sys.exit(1)
-
-
 def generate_debugger_file(csv_file, st_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
         print(
@@ -168,7 +151,8 @@ def main():
 
             print("Parsing complex variables...")
 
-            parse_complex_variables(st_file)
+            complex_parser = ComplexParser()
+            complex_parser.RewriteST(st_file)
 
         except Exception as e:
             print(f"Error generating ST file: {e}", file=sys.stderr)
@@ -176,7 +160,10 @@ def main():
 
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
-            parse_complex_variables(args.generate_debug[0])
+            complex_parser = ComplexParser()
+            complex_parser.AddComplexVars(
+                args.generate_debug[0], args.generate_debug[1]
+            )
 
             debug_text = generate_debugger_file(
                 args.generate_debug[1], args.generate_debug[0]
