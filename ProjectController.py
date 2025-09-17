@@ -1,14 +1,16 @@
-import os
-import traceback
+import traceback, os
 from jinja2 import Environment, FileSystemLoader
 from runtime.typemapping import DebugTypesSize
 import util.paths as paths
+import hashlib
 
 
 class ProjectController:
 
     def __init__(self):
-
+        self.__loader = FileSystemLoader(
+            os.path.join(paths.AbsDir(__file__), "templates")
+        )
         self.ResetIECProgramsAndVariables()
 
     def SetCSVFile(self, filename):
@@ -157,11 +159,10 @@ class ProjectController:
         ]
         return variable_decl_array, extern_variables_declarations, enum_types
 
-    def Generate_embedded_plc_debugger(self):
+    def Generate_embedded_plc_debugger(self, st_file):
         dvars, externs, enums = self.Generate_plc_debug_cvars()
 
-        loader = FileSystemLoader(os.path.join(paths.AbsDir(__file__)))
-        template = Environment(loader=loader).get_template("debug.c.j2")
+        template = Environment(loader=self.__loader).get_template("debug.c.j2")
         cfile = os.path.join(paths.AbsDir(self._csvfile), "debug.c")
         debug_text = template.render(
             debug={
@@ -171,6 +172,16 @@ class ProjectController:
                 "types": list(set(a.split("_", 1)[0] for a in enums)),
             }
         )
+
         with open(cfile, "w") as f:
             f.write(debug_text)
-        return cfile, debug_text
+
+        # Wrap debugger code around (* comments *)
+        MD5 = hashlib.md5(open(st_file, "rb").read()).hexdigest()
+        if MD5 is None:
+            raise ("Error building project: md5 object is null\n")
+
+        # Add MD5 value to debug.cpp file
+        c_debug = 'char md5[] = "' + MD5 + '";\n' + debug_text
+
+        return cfile, c_debug

@@ -5,12 +5,15 @@ import plcopen.plcopen as plcopen
 import PLCGenerator
 from PLCControler import PLCControler
 from ProjectController import ProjectController
+from ComplexParser import ComplexParser
+from GlueGenerator import GlueGenerator
 
 
 def compile_xml_to_st(xml_file_path):
     if not os.path.isfile(xml_file_path) or not xml_file_path.lower().endswith(".xml"):
         print(
-            f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected."
+            f"Error: Invalid file '{xml_file_path}'. A path to a xml file is expected.",
+            file=sys.stderr,
         )
         return
     print(f"Compiling file {xml_file_path}")
@@ -25,19 +28,19 @@ def compile_xml_to_st(xml_file_path):
     if result is not None:
         if isinstance(result, (tuple, list)) and len(result) == 2:
             (num, line) = result
-            print(f"PLC syntax error at line {num}:\n{line}")
+            print(f"PLC syntax error at line {num}:\n{line}", file=sys.stderr)
             return
         elif isinstance(result, str):
             print(result)
             return
         else:
-            print("Unknown error! Exiting...")
+            print("Unknown error! Exiting...", file=sys.stderr)
             return
 
     project_tree = plcopen.LoadProject(file_name)
 
     if project_tree is None or len(project_tree) < 2:
-        print(f"Error: Failed to load XML project file.")
+        print("Error: Failed to load XML project file.", file=sys.stderr)
         return
 
     project = project_tree[0]
@@ -56,37 +59,78 @@ def compile_xml_to_st(xml_file_path):
         sys.exit(1)
 
 
-def generate_debugger_file(csv_file):
+def generate_debugger_file(csv_file, st_file):
     if not os.path.isfile(csv_file) or not csv_file.lower().endswith(".csv"):
-        print(f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.")
+        print(
+            f"Error: Invalid file '{csv_file}'. A path to a csv file is expected.",
+            file=sys.stderr,
+        )
         return None, None
 
     controler = ProjectController()
     controler.SetCSVFile(csv_file)
-    return controler.Generate_embedded_plc_debugger()[1]
+    return controler.Generate_embedded_plc_debugger(st_file)[1]
 
 
-def append_debugger_to_st(program_text, debug_text):
-    # Wrap debugger code around (* comments *)
+def append_debugger_to_st(st_file, debug_text):
     c_debug_lines = debug_text.split("\n")
     c_debug = [f"(*DBG:{line}*)" for line in c_debug_lines]
     c_debug = "\n".join(c_debug)
 
-    # Concatenate debugger code with st program
-    return f"{program_text}\n{c_debug}"
+    with open(st_file, "a") as f:
+        f.write("\n")
+        f.write(c_debug)
 
+def generate_gluevars(located_vars_file):
+    if not os.path.isfile(located_vars_file) or not located_vars_file.lower().endswith(".h"):
+        print(
+            f"Error: Invalid file '{located_vars_file}'. A path to a LOCATED_VARIABLES.h file is expected.",
+            file=sys.stderr,
+        )
+        return None
+    
+    # Read the LOCATED_VARIABLES.h file
+    with open(located_vars_file, "r") as f:
+        located_vars = f.readlines()
+
+    # Create an instance of GlueGenerator
+    generator = GlueGenerator()
+    glueVars = generator.generate_glue_variables(located_vars)
+
+    if glueVars is None:
+        print("Error: Failed to generate glue variables.", file=sys.stderr)
+        return None
+
+    # Save the generated glue variables to a file
+    glue_vars_file = os.path.join(os.path.dirname(located_vars_file), "glueVars.c")
+    with open(glue_vars_file, "w") as f:
+        f.write(glueVars)
+
+    # Print success message
+    print(f"Glue variables saved to {glue_vars_file}")
 
 def main():
     parser = argparse.ArgumentParser(
         description="Process a PLCopen XML file and transpiles it into a Structured Text (ST) program."
     )
-    parser.add_argument("--generate-st", type=str, help="The path to the XML file")
+    parser.add_argument(
+        "--generate-st", 
+        metavar=("XML_FILE"), 
+        type=str, 
+        help="The path to the XML file"
+    )
     parser.add_argument(
         "--generate-debug",
         nargs=2,
-        metavar=("XML_FILE", "CSV_FILE"),
+        metavar=("ST_FILE", "CSV_FILE"),
         type=str,
-        help="Paths to the XML file and the variables CSV file",
+        help="Paths to the ST file and the variables CSV file",
+    )
+    parser.add_argument(
+        "--generate-gluevars", 
+        metavar=("LOCATED_VARS_FILE"), 
+        type=str, 
+        help="The path to the LOCATED_VARIABLES.h file"
     )
 
     args = parser.parse_args()
@@ -101,37 +145,51 @@ def main():
 
             print("Saving ST file...")
 
+            st_file = os.path.abspath(args.generate_st).replace("plc.xml", "program.st")
+            with open(st_file, "w") as file:
+                file.write(program_text)
+
+            print("Parsing complex variables...")
+
+            complex_parser = ComplexParser()
+            complex_parser.RewriteST(st_file)
+
         except Exception as e:
             print(f"Error generating ST file: {e}", file=sys.stderr)
             sys.exit(1)
 
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
-            program_text = compile_xml_to_st(args.generate_debug[0])
+            complex_parser = ComplexParser()
+            complex_parser.AddComplexVars(
+                args.generate_debug[0], args.generate_debug[1]
+            )
 
-            if program_text is None:
-                # This exception will always be caught
-                raise Exception("Compilation failed, no program text generated.")
+            debug_text = generate_debugger_file(
+                args.generate_debug[1], args.generate_debug[0]
+            )
 
-            debug_text = generate_debugger_file(args.generate_debug[1])
-
-            program_text = append_debugger_to_st(program_text, debug_text)
-
-            print("Saving files...")
+            append_debugger_to_st(args.generate_debug[0], debug_text)
 
         except Exception as e:
             print(f"Error generating debug: {e}", file=sys.stderr)
             sys.exit(1)
 
-    else:
-        print("Error: No valid arguments provided. Use --help for usage information.")
-        return
+    elif args.generate_gluevars:
+        try:
+            print("Generating glue variables...")
+            generate_gluevars(args.generate_gluevars)
 
-    st_file = os.path.abspath(args.generate_st or args.generate_debug[0]).replace(
-        "plc.xml", "program.st"
-    )
-    with open(st_file, "w") as file:
-        file.write(program_text)
+        except Exception as e:
+            print(f"Error generating glue variables: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    else:
+        print(
+            "Error: No valid arguments provided. Use --help for usage information.",
+            file=sys.stderr,
+        )
+        return
 
 
 if __name__ == "__main__":

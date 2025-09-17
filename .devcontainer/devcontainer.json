@@ -17,11 +17,13 @@
                 "rainbow-panda.panda",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "mechatroner.rainbow-csv"
+                "mechatroner.rainbow-csv",
+                "Serhioromano.vscode-st"
             ]
         }
     },
     "forwardPorts": [22],
     "postCreateCommand": "",
-    "remoteUser": "dev"
+    "remoteUser": "dev",
+    "runArgs": ["--name", "xml2st-devcontainer"]
 }
