@@ -8,16 +8,19 @@ from util import paths
 # __LOCATED_VAR(INT,__QW0,Q,W,0)
 # __LOCATED_VAR(BOOL,__QX0_1,Q,X,0,1)
 
+
 class GlueGenerator:
 
     def __init__(self):
-        self.__loader = FileSystemLoader(os.path.join(paths.AbsDir(__file__), "templates"))
+        self.__loader = FileSystemLoader(
+            os.path.join(paths.AbsDir(__file__), "templates")
+        )
 
     def __glue_logic(self, varName):
         """
         Generate glue logic based on variable type.
         """
-        
+
         # Extract indices
         print(f"Linking variable {varName}")
         try:
@@ -28,38 +31,38 @@ class GlueGenerator:
             raise Exception(f"Error parsing variable name '{varName}': {e}")
 
         kind = varName[2]  # I, Q, M
-        sub  = varName[3]  # X, B, W, D, L
+        sub = varName[3]  # X, B, W, D, L
 
-        if kind == 'I':
-            if sub == 'X':
+        if kind == "I":
+            if sub == "X":
                 return f"bool_input_ptr[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
-            elif sub == 'B':
+            elif sub == "B":
                 return f"byte_input_ptr[{pos1}] = (IEC_BYTE *){varName};"
-            elif sub == 'W':
+            elif sub == "W":
                 return f"int_input_ptr[{pos1}] = (IEC_UINT *){varName};"
-            elif sub == 'D':
+            elif sub == "D":
                 return f"dint_input_ptr[{pos1}] = (IEC_UDINT *){varName};"
-            elif sub == 'L':
+            elif sub == "L":
                 return f"lint_input_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
-        elif kind == 'Q':
-            if sub == 'X':
+        elif kind == "Q":
+            if sub == "X":
                 return f"bool_output_ptr[{pos1}][{pos2}] = (IEC_BOOL *){varName};"
-            elif sub == 'B':
+            elif sub == "B":
                 return f"byte_output_ptr[{pos1}] = (IEC_BYTE *){varName};"
-            elif sub == 'W':
+            elif sub == "W":
                 return f"int_output_ptr[{pos1}] = (IEC_UINT *){varName};"
-            elif sub == 'D':
+            elif sub == "D":
                 return f"dint_output_ptr[{pos1}] = (IEC_UDINT *){varName};"
-            elif sub == 'L':
+            elif sub == "L":
                 return f"lint_output_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
-        elif kind == 'M':
-            if sub == 'W':
+        elif kind == "M":
+            if sub == "W":
                 return f"int_memory_ptr[{pos1}] = (IEC_UINT *){varName};"
-            elif sub == 'D':
+            elif sub == "D":
                 return f"dint_memory_ptr[{pos1}] = (IEC_UDINT *){varName};"
-            elif sub == 'L':
+            elif sub == "L":
                 return f"lint_memory_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
         raise Exception(f"Unhandled variable type: {varName}")
@@ -74,7 +77,11 @@ class GlueGenerator:
             print(f"Warning: Line '{line.strip()}' does not match expected format.")
             return None
         varType, varName = m.group(1), m.group(2)
-        return {"type": varType, "name": varName, "glue_code": self.__glue_logic(varName)}
+        return {
+            "type": varType,
+            "name": varName,
+            "glue_code": self.__glue_logic(varName),
+        }
 
     def generate_glue_variables(self, located_vars_lines):
         """

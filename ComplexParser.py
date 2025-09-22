@@ -318,6 +318,19 @@ class ComplexParser:
                     ):
                         break
                 else:
+                    if (
+                        len(
+                            list(
+                                filter(
+                                    lambda x: not EMPTY_LINE.match(x)
+                                    and not isinstance(x, _InsertLine),
+                                    block.lines,
+                                )
+                            )
+                        )
+                        > 2
+                    ):
+                        lines.extend(self.__getBlockLines(block))
                     lines.append(self.__rewriteStructsAsFunctionBlocks())
                     continue
                 lines.extend(self.__getBlockLines(block))

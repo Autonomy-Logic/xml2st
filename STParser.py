@@ -20,7 +20,7 @@ BASE_TYPES = [
     "BYTE",
     "WORD",
     "DWORD",
-    "LWORD"
+    "LWORD",
 ]
 
 
@@ -137,8 +137,27 @@ class _ProgramDefinition(_NamedBlock):
         return None
 
 
+class _Function(_NamedBlock):
+    def __init__(self, name="function"):
+        super().__init__(name)
+        self.start = re.compile(
+            rf"^{self.name}\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?P<return_type>[A-Za-z_][A-Za-z0-9_]*)\s*$"
+        )
+
+    def GetInfo(self, line):
+        match = self.start.match(line)
+        if match:
+            return {
+                "name": match.group("name"),
+                "type": self.name,
+                "return_type": match.group("return_type"),
+            }
+        return None
+
+
 TYPE = _Block("type")
 FUNCTION_BLOCK = _NamedBlock("function_block")
+FUNCTION = _Function()
 PROGRAM = _NamedBlock("program")
 CONFIGURATION = _NamedBlock("configuration")
 RESOURCE = _NamedBlock("resource")
@@ -159,6 +178,7 @@ ALL_BLOCKS = [
     STRUCT,
     ARRAY,
     VARIABLE,
+    FUNCTION,
 ]
 
 CLOSABLE_BLOCKS = [
@@ -168,4 +188,5 @@ CLOSABLE_BLOCKS = [
     CONFIGURATION,
     RESOURCE,
     STRUCT,
+    FUNCTION,
 ]
