@@ -322,8 +322,8 @@ class ComplexParser:
                         len(
                             list(
                                 filter(
-                                    lambda x: not EMPTY_LINE.match(x)
-                                    and not isinstance(x, _InsertLine),
+                                    lambda x: not isinstance(x, _InsertLine)
+                                    and not EMPTY_LINE.match(x),
                                     block.lines,
                                 )
                             )
