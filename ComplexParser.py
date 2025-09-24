@@ -240,7 +240,7 @@ class ComplexParser:
         changes = [b for b in block.inner_blocks if b.simple]
         self.simple_types.extend(changes)
 
-        simple_types_names = [s.name for s in self.simple_types]
+        self.simple_types_names = [s.name for s in self.simple_types]
 
         complex_blocks = [b for b in block.inner_blocks if not b.simple]
 
@@ -250,26 +250,28 @@ class ComplexParser:
             complex_blocks = []
             for complex_block in complex_blocks_copy:
                 if isinstance(complex_block, _VariableInstance):
-                    complex_block.simple = complex_block.data_type in simple_types_names
+                    complex_block.simple = (
+                        complex_block.data_type in self.simple_types_names
+                    )
                     if complex_block.simple:
                         changes = True
                         self.simple_types.append(complex_block)
-                        simple_types_names.append(complex_block.name)
+                        self.simple_types_names.append(complex_block.name)
                     else:
                         complex_blocks.append(complex_block)
                 elif isinstance(complex_block, _StructInstance):
                     for inner_block in [
                         i for i in complex_block.inner_blocks if not i.simple
                     ]:
-                        if inner_block.data_type not in simple_types_names:
+                        if inner_block.data_type not in self.simple_types_names:
                             complex_blocks.append(complex_block)
                             break
                     else:
                         complex_block.simple = True
                         self.simple_types.append(complex_block)
+                        self.simple_types_names.append(complex_block.name)
                         changes = True
 
-        self.simple_types_names = [s.name for s in self.simple_types]
         self.complex_types.extend([b.name for b in complex_blocks])
         self.complex_structs.extend(
             [b for b in complex_blocks if isinstance(b, _StructInstance)]
