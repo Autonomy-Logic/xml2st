@@ -81,14 +81,17 @@ def append_debugger_to_st(st_file, debug_text):
         f.write("\n")
         f.write(c_debug)
 
+
 def generate_gluevars(located_vars_file):
-    if not os.path.isfile(located_vars_file) or not located_vars_file.lower().endswith(".h"):
+    if not os.path.isfile(located_vars_file) or not located_vars_file.lower().endswith(
+        ".h"
+    ):
         print(
             f"Error: Invalid file '{located_vars_file}'. A path to a LOCATED_VARIABLES.h file is expected.",
             file=sys.stderr,
         )
         return None
-    
+
     # Read the LOCATED_VARIABLES.h file
     with open(located_vars_file, "r") as f:
         located_vars = f.readlines()
@@ -109,15 +112,13 @@ def generate_gluevars(located_vars_file):
     # Print success message
     print(f"Glue variables saved to {glue_vars_file}")
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Process a PLCopen XML file and transpiles it into a Structured Text (ST) program."
     )
     parser.add_argument(
-        "--generate-st", 
-        metavar=("XML_FILE"), 
-        type=str, 
-        help="The path to the XML file"
+        "--generate-st", metavar=("XML_FILE"), type=str, help="The path to the XML file"
     )
     parser.add_argument(
         "--generate-debug",
@@ -127,10 +128,10 @@ def main():
         help="Paths to the ST file and the variables CSV file",
     )
     parser.add_argument(
-        "--generate-gluevars", 
-        metavar=("LOCATED_VARS_FILE"), 
-        type=str, 
-        help="The path to the LOCATED_VARIABLES.h file"
+        "--generate-gluevars",
+        metavar=("LOCATED_VARS_FILE"),
+        type=str,
+        help="The path to the LOCATED_VARIABLES.h file",
     )
 
     args = parser.parse_args()
