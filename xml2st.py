@@ -84,7 +84,7 @@ def append_debugger_to_st(st_file, debug_text):
         f.write(c_debug)
 
 
-def generate_gluevars(located_vars_file):
+def generate_gluevars(located_vars_file, template_file, output):
     if not os.path.isfile(located_vars_file) or not located_vars_file.lower().endswith(
         ".h"
     ):
@@ -100,14 +100,17 @@ def generate_gluevars(located_vars_file):
 
     # Create an instance of GlueGenerator
     generator = GlueGenerator()
-    glueVars = generator.generate_glue_variables(located_vars)
+    glueVars = generator.generate_glue_variables(located_vars, template_file)
 
     if glueVars is None:
         print("Error: Failed to generate glue variables.", file=sys.stderr)
         return None
 
     # Save the generated glue variables to a file
-    glue_vars_file = os.path.join(os.path.dirname(located_vars_file), "glueVars.c")
+    if output:
+        glue_vars_file = os.path.abspath(output)
+    else:
+        glue_vars_file = os.path.join(os.path.dirname(located_vars_file), "glueVars.c")
     with open(glue_vars_file, "w") as f:
         f.write(glueVars)
 
@@ -140,6 +143,8 @@ def main():
         action="store_true",
         help="List all available serial ports"
     )
+    parser.add_argument("-o","--output", metavar=("OUTPUT_FILE"), type=str, help="The path to the output file")
+    parser.add_argument("-t","--template-file", metavar=("TEMPLATE_FILE"), type=str, help="The path to the template file for glue variables generation")
 
     args = parser.parse_args()
 
@@ -152,8 +157,10 @@ def main():
                 raise Exception("Compilation failed, no program text generated.")
 
             print("Saving ST file...")
-
-            st_file = os.path.abspath(args.generate_st).replace("plc.xml", "program.st")
+            if args.output:
+                st_file = os.path.abspath(args.output)
+            else:
+                st_file = os.path.abspath(args.generate_st).replace("plc.xml", "program.st")
             with open(st_file, "w") as file:
                 file.write(program_text)
 
@@ -184,13 +191,13 @@ def main():
             sys.exit(1)
 
     elif args.generate_gluevars:
-        try:
-            print("Generating glue variables...")
-            generate_gluevars(args.generate_gluevars)
+        # try:
+        print("Generating glue variables...")
+        generate_gluevars(args.generate_gluevars, args.template_file, args.output)
 
-        except Exception as e:
-            print(f"Error generating glue variables: {e}", file=sys.stderr)
-            sys.exit(1)
+        # except Exception as e:
+        #     print(f"Error generating glue variables: {e}", file=sys.stderr)
+        #     sys.exit(1)
 
     elif args.list_ports:
         port_list = SerialPortList()
