@@ -162,6 +162,10 @@ class ProjectController:
     def Generate_embedded_plc_debugger(self, st_file):
         dvars, externs, enums = self.Generate_plc_debug_cvars()
 
+        MD5 = hashlib.md5(open(st_file, "rb").read()).hexdigest()
+        if MD5 is None:
+            raise ("Error building project: md5 object is null\n")
+
         template = Environment(loader=self.__loader).get_template("debug.c.j2")
         cfile = os.path.join(paths.AbsDir(self._csvfile), "debug.c")
         debug_text = template.render(
@@ -170,6 +174,7 @@ class ProjectController:
                 "vars": dvars,
                 "enums": enums,
                 "types": list(set(a.split("_", 1)[0] for a in enums)),
+                "md5": MD5,
             }
         )
 
@@ -177,11 +182,7 @@ class ProjectController:
             f.write(debug_text)
 
         # Wrap debugger code around (* comments *)
-        MD5 = hashlib.md5(open(st_file, "rb").read()).hexdigest()
-        if MD5 is None:
-            raise ("Error building project: md5 object is null\n")
-
         # Add MD5 value to debug.cpp file
-        c_debug = 'char md5[] = "' + MD5 + '";\n' + debug_text
+        c_debug = 'char plc_program_md5[] = "' + MD5 + '";\n' + debug_text
 
         return cfile, c_debug
