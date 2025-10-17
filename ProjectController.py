@@ -183,6 +183,6 @@ class ProjectController:
 
         # Wrap debugger code around (* comments *)
         # Add MD5 value to debug.cpp file
-        c_debug = 'char plc_program_md5[] = "' + MD5 + '";\n' + debug_text
+        c_debug = 'char md5[] = "' + MD5 + '";\n' + debug_text
 
         return cfile, c_debug
