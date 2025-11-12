@@ -139,9 +139,7 @@ def main():
         help="The path to the LOCATED_VARIABLES.h file",
     )
     parser.add_argument(
-        "--list-ports",
-        action="store_true",
-        help="List all available serial ports"
+        "--list-ports", action="store_true", help="List all available serial ports"
     )
     parser.add_argument("-o","--output", metavar=("OUTPUT_FILE"), type=str, help="The path to the output file")
     parser.add_argument("-t","--template-file", metavar=("TEMPLATE_FILE"), type=str, help="The path to the template file for glue variables generation")
@@ -175,11 +173,6 @@ def main():
 
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
-            complex_parser = ComplexParser()
-            complex_parser.AddComplexVars(
-                args.generate_debug[0], args.generate_debug[1]
-            )
-
             debug_text = generate_debugger_file(
                 args.generate_debug[1], args.generate_debug[0]
             )
