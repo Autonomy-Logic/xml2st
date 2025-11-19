@@ -283,7 +283,10 @@ class ComplexParser:
         lines = []
         for block in [b for b in self.blocks]:
             if block.type == TYPE.name:
-                lines.extend(self.__getBlockLines(block))
+                type_lines = self.__getBlockLines(block)
+                non_empty_lines = [l for l in type_lines if l.strip() and l.strip() not in ['TYPE', 'END_TYPE']]
+                if len(non_empty_lines) > 0:
+                    lines.extend(type_lines)
                 lines.append(self.__rewriteStructsAsFunctionBlocks())
             else:
                 lines.extend(self.__getBlockLines(block))
