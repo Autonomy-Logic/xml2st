@@ -96,8 +96,7 @@ class GlueGenerator:
         if template_file:
             abs_template_file = os.path.abspath(template_file)
             env = Environment(loader=FileSystemLoader(os.path.dirname(abs_template_file)))
-            template = env.get_template(template_file)
-            print(template)
+            template = env.get_template(os.path.basename(template_file))
         else:
             env = Environment(loader=self.__loader)
             template = env.get_template("glueVars.c.j2")
