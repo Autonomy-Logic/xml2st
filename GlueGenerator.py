@@ -80,7 +80,7 @@ class GlueGenerator:
         return {
             "type": varType,
             "name": varName,
-            "glue_code": self.__glue_logic(varName),
+            # "glue_code": self.__glue_logic(varName),
         }
 
     def generate_glue_variables(self, located_vars_lines, template_file):

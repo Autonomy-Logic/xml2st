@@ -9,6 +9,7 @@ from ProjectController import ProjectController
 from ComplexParser import ComplexParser
 from GlueGenerator import GlueGenerator
 from SerialPortList import SerialPortList
+from PatchFiles import PatchFiles
 
 
 def compile_xml_to_st(xml_file_path):
@@ -141,6 +142,12 @@ def main():
     parser.add_argument(
         "--list-ports", action="store_true", help="List all available serial ports"
     )
+    parser.add_argument(
+        "--patch-files",
+        metavar=("SOURCE_DIR"),
+        type=str,
+        help="The path to the source directory containing files to patch",
+    )
     parser.add_argument("-o","--output", metavar=("OUTPUT_FILE"), type=str, help="The path to the output file")
     parser.add_argument("-t","--template-file", metavar=("TEMPLATE_FILE"), type=str, help="The path to the template file for glue variables generation")
 
@@ -196,6 +203,9 @@ def main():
         port_list = SerialPortList()
         ports = port_list.get_ports()
         print(json.dumps(ports, indent=2))
+
+    elif args.patch_files:
+        PatchFiles(args.patch_files)
 
     else:
         print(
