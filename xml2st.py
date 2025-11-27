@@ -8,7 +8,7 @@ from PLCControler import PLCControler
 from ProjectController import ProjectController
 from ComplexParser import ComplexParser
 from GlueGenerator import GlueGenerator
-from SerialPortList import SerialPortList
+#from SerialPortList import SerialPortList
 from PatchFiles import PatchFiles
 
 
@@ -199,10 +199,10 @@ def main():
         #     print(f"Error generating glue variables: {e}", file=sys.stderr)
         #     sys.exit(1)
 
-    elif args.list_ports:
-        port_list = SerialPortList()
-        ports = port_list.get_ports()
-        print(json.dumps(ports, indent=2))
+#    elif args.list_ports:
+#        port_list = SerialPortList()
+#        ports = port_list.get_ports()
+#        print(json.dumps(ports, indent=2))
 
     elif args.patch_files:
         PatchFiles(args.patch_files)

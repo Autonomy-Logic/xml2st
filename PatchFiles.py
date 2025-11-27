@@ -52,8 +52,9 @@ config_header=r'''
 //     BOOL *: (name.flags & __IEC_FORCE_FLAG) ? name.fvalue __VA_ARGS__ : ((name.flags & 0xf0) ? ((*(name.value))__VA_ARGS__) >> ((name.flags >> 4) - 1) & 1 : (*(name.value))__VA_ARGS__), \
 //     default: ((name.flags & __IEC_FORCE_FLAG) ? name.fvalue __VA_ARGS__ : (*(name.value))__VA_ARGS__))
 
-#define __GET_LOCATED(name, ...) \
-    ((name.flags & __IEC_FORCE_FLAG) ? name.fvalue __VA_ARGS__ : ((name.flags & 0xf0) ? ((*(name.value))__VA_ARGS__) >> ((name.flags >> 4) - 1) & 1 : (*(name.value))__VA_ARGS__))
+#define __GET_LOCATED(name, ...) _Generic((name.value),                                                                                                                                     \
+    BOOL *: ((name.flags & __IEC_FORCE_FLAG) ? name.fvalue __VA_ARGS__ : ((name.flags & 0xf0) ? ((*(name.value))__VA_ARGS__) >> ((name.flags >> 4) - 1) & 1 : (*(name.value))__VA_ARGS__)), \
+    default: ((name.flags & __IEC_FORCE_FLAG) ? name.fvalue __VA_ARGS__ : (*(name.value))__VA_ARGS__))
 
 #undef __SET_LOCATED
 #define __SET_LOCATED(prefix, name, suffix, new_value)                                                                                                                \
