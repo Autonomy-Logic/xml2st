@@ -80,10 +80,10 @@ class GlueGenerator:
         return {
             "type": varType,
             "name": varName,
-            "glue_code": self.__glue_logic(varName),
+            # "glue_code": self.__glue_logic(varName),
         }
 
-    def generate_glue_variables(self, located_vars_lines):
+    def generate_glue_variables(self, located_vars_lines, template_file):
         """
         Generate glue variables from the LOCATED_VARIABLES content.
         """
@@ -93,6 +93,11 @@ class GlueGenerator:
             if entry is not None:
                 parsed.append(entry)
 
-        env = Environment(loader=self.__loader)
-        template = env.get_template("glueVars.c.j2")
+        if template_file:
+            abs_template_file = os.path.abspath(template_file)
+            env = Environment(loader=FileSystemLoader(os.path.dirname(abs_template_file)))
+            template = env.get_template(os.path.basename(template_file))
+        else:
+            env = Environment(loader=self.__loader)
+            template = env.get_template("glueVars.c.j2")
         return template.render(vars=parsed)
