@@ -1,12 +1,14 @@
 import argparse
 import os
 import sys
+import json
 import plcopen.plcopen as plcopen
 import PLCGenerator
 from PLCControler import PLCControler
 from ProjectController import ProjectController
 from ComplexParser import ComplexParser
 from GlueGenerator import GlueGenerator
+from SerialPortList import SerialPortList
 
 
 def compile_xml_to_st(xml_file_path):
@@ -133,6 +135,9 @@ def main():
         type=str,
         help="The path to the LOCATED_VARIABLES.h file",
     )
+    parser.add_argument(
+        "--list-ports", action="store_true", help="List all available serial ports"
+    )
 
     args = parser.parse_args()
 
@@ -161,11 +166,6 @@ def main():
 
     elif args.generate_debug and len(args.generate_debug) == 2:
         try:
-            complex_parser = ComplexParser()
-            complex_parser.AddComplexVars(
-                args.generate_debug[0], args.generate_debug[1]
-            )
-
             debug_text = generate_debugger_file(
                 args.generate_debug[1], args.generate_debug[0]
             )
@@ -184,6 +184,11 @@ def main():
         except Exception as e:
             print(f"Error generating glue variables: {e}", file=sys.stderr)
             sys.exit(1)
+
+    elif args.list_ports:
+        port_list = SerialPortList()
+        ports = port_list.get_ports()
+        print(json.dumps(ports, indent=2))
 
     else:
         print(
