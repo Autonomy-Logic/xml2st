@@ -58,7 +58,14 @@ class GlueGenerator:
                 return f"lint_output_ptr[{pos1}] = (IEC_ULINT *){varName};"
 
         elif kind == "M":
-            if sub == "W":
+            if sub == "X":
+                # %MX (bool memory) is only supported in OpenPLC v4
+                return (
+                    f"#ifdef OPENPLC_V4\n"
+                    f"    bool_memory_ptr[{pos1}][{pos2}] = (IEC_BOOL *){varName};\n"
+                    f"#endif"
+                )
+            elif sub == "W":
                 return f"int_memory_ptr[{pos1}] = (IEC_UINT *){varName};"
             elif sub == "D":
                 return f"dint_memory_ptr[{pos1}] = (IEC_UDINT *){varName};"
