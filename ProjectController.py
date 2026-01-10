@@ -82,6 +82,22 @@ class ProjectController:
                 config_FBs = {}
                 # Track global array variables: {parent_c_path: {element_type, count}}
                 config_arrays = {}
+                # Track global variable names (defined at CONFIG0 level) to detect external references
+                global_var_names = set()
+
+                # First pass: collect global variable names
+                for line in ListGroup[1]:
+                    line_parts = line.strip().split(";")
+                    if len(line_parts) >= 4:
+                        c_path = line_parts[3]
+                        path_parts = c_path.split(".", 2)
+                        # Global variables are at CONFIG0.VARNAME level (exactly 2 parts)
+                        # or CONFIG0.VARNAME.xxx (3+ parts where part[2] starts with "value" or is a member)
+                        if len(path_parts) >= 2 and path_parts[0].startswith("CONFIG"):
+                            # Check if this is a CONFIG0.VARNAME pattern (not CONFIG0.RES0.xxx)
+                            if not path_parts[1].startswith("RES"):
+                                global_var_names.add(path_parts[1])
+
                 Idx = 0
                 for line in ListGroup[1]:
                     # Split and Maps each field to dictionnary entries
@@ -111,7 +127,20 @@ class ProjectController:
                                     config_arrays[parent_c_path]["count"] += 1
                             else:
                                 # For resource-level variables (RES0.INSTANCE.xxx)
-                                attrs["C_path"] = "__".join(parts[1:])
+                                c_path = "__".join(parts[1:])
+                                # Check if this is an external array/struct variable access
+                                # External variables have .value as a pointer, so need value-> instead of value.
+                                # Pattern: INSTANCE.VARNAME.value.xxx where VARNAME is a global variable
+                                if ".value." in c_path:
+                                    # Extract variable name from path like INSTANCE0.GLOBALVAR.value.table[0]
+                                    # Split parts[2] to get the variable name
+                                    sub_parts = parts[2].split(".")
+                                    if len(sub_parts) >= 3:  # INSTANCE.VARNAME.value.xxx
+                                        var_name = sub_parts[1]
+                                        if var_name in global_var_names:
+                                            # This is an external variable access, use pointer syntax
+                                            c_path = c_path.replace(".value.", ".value->", 1)
+                                attrs["C_path"] = c_path
                     else:
                         attrs["C_path"] = "__".join(parts)
                         if attrs["vartype"] == "FB":
