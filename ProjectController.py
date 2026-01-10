@@ -94,7 +94,15 @@ class ProjectController:
                             parts = [config_FB] + parts[2:]
                             attrs["C_path"] = ".".join(parts)
                         else:
-                            attrs["C_path"] = "__".join(parts[1:])
+                            # Check if this is a global array/struct variable at CONFIG level
+                            # Pattern: CONFIG0.VARNAME.value.table[x] or CONFIG0.VARNAME.value.fieldname
+                            # These should become: CONFIG0__VARNAME.value.table[x] or CONFIG0__VARNAME.value.fieldname
+                            if parts[0].startswith("CONFIG") and parts[2].startswith("value"):
+                                # Global array or struct access - keep CONFIG prefix
+                                attrs["C_path"] = parts[0] + "__" + parts[1] + "." + parts[2]
+                            else:
+                                # For resource-level variables (RES0.INSTANCE.xxx)
+                                attrs["C_path"] = "__".join(parts[1:])
                     else:
                         attrs["C_path"] = "__".join(parts)
                         if attrs["vartype"] == "FB":
