@@ -80,6 +80,8 @@ class ProjectController:
 
                 # second section contains all variables
                 config_FBs = {}
+                # Track global array variables: {parent_c_path: {element_type, count}}
+                config_arrays = {}
                 Idx = 0
                 for line in ListGroup[1]:
                     # Split and Maps each field to dictionnary entries
@@ -100,6 +102,13 @@ class ProjectController:
                             if parts[0].startswith("CONFIG") and parts[2].startswith("value"):
                                 # Global array or struct access - keep CONFIG prefix
                                 attrs["C_path"] = parts[0] + "__" + parts[1] + "." + parts[2]
+                                # Track global array variables for extern declarations
+                                # Pattern: value.table[x] indicates array element
+                                if parts[2].startswith("value.table["):
+                                    parent_c_path = parts[0] + "__" + parts[1]
+                                    if parent_c_path not in config_arrays:
+                                        config_arrays[parent_c_path] = {"element_type": attrs["type"], "count": 0}
+                                    config_arrays[parent_c_path]["count"] += 1
                             else:
                                 # For resource-level variables (RES0.INSTANCE.xxx)
                                 attrs["C_path"] = "__".join(parts[1:])
@@ -118,6 +127,17 @@ class ProjectController:
                         # Count variables only, ignore FBs
                         Idx += 1
                     self._VariablesList.append(attrs)
+
+                # Add synthetic entries for global array variables to _VariablesList
+                # These are needed to generate extern declarations
+                # Use vartype "GLOBAL_ARRAY" to use the correct extern format (no __IEC_ prefix)
+                for parent_c_path, info in config_arrays.items():
+                    array_type = f"__ARRAY_OF_{info['element_type']}_{info['count']}"
+                    self._VariablesList.append({
+                        "C_path": parent_c_path,
+                        "type": array_type,
+                        "vartype": "GLOBAL_ARRAY",
+                    })
 
                 # third section contains ticktime
                 if len(ListGroup) > 2:
@@ -158,6 +178,7 @@ class ProjectController:
             "OUT": ("extern __IEC_", "_p"),
             "VAR": ("extern __IEC_", "_t"),
             "FB": ("extern ", ""),
+            "GLOBAL_ARRAY": ("extern ", ""),
         }
 
         extern_variables_declarations = [
