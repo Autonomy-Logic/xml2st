@@ -127,20 +127,15 @@ class ProjectController:
                                     config_arrays[parent_c_path]["count"] += 1
                             else:
                                 # For resource-level variables (RES0.INSTANCE.xxx)
-                                c_path = "__".join(parts[1:])
-                                # Check if this is an external array/struct variable access
-                                # External variables have .value as a pointer, so need value-> instead of value.
-                                # Pattern: INSTANCE.VARNAME.value.xxx where VARNAME is a global variable
-                                if ".value." in c_path:
-                                    # Extract variable name from path like INSTANCE0.GLOBALVAR.value.table[0]
-                                    # Split parts[2] to get the variable name
-                                    sub_parts = parts[2].split(".")
-                                    if len(sub_parts) >= 3:  # INSTANCE.VARNAME.value.xxx
-                                        var_name = sub_parts[1]
-                                        if var_name in global_var_names:
-                                            # This is an external variable access, use pointer syntax
-                                            c_path = c_path.replace(".value.", ".value->", 1)
-                                attrs["C_path"] = c_path
+                                # Check if this is an external variable reference (references a global)
+                                # External variables should be skipped - only the global is needed for debugging
+                                # Pattern: INSTANCE.VARNAME.xxx where VARNAME is a global variable name
+                                sub_parts = parts[2].split(".")
+                                if len(sub_parts) >= 2 and sub_parts[1] in global_var_names:
+                                    # This is an external variable - skip it entirely
+                                    # The global variable will be used for monitoring/forcing instead
+                                    continue
+                                attrs["C_path"] = "__".join(parts[1:])
                     else:
                         attrs["C_path"] = "__".join(parts)
                         if attrs["vartype"] == "FB":
