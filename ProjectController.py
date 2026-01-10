@@ -178,7 +178,7 @@ class ProjectController:
             "OUT": ("extern __IEC_", "_p"),
             "VAR": ("extern __IEC_", "_t"),
             "FB": ("extern ", ""),
-            "GLOBAL_ARRAY": ("extern ", ""),
+            "GLOBAL_ARRAY": ("extern __IEC_", "_t"),
         }
 
         extern_variables_declarations = [
