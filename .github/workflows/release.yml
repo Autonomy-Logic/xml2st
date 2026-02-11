@@ -1,0 +1,310 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  CFLAGS: -O0
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up linux environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip python3-venv binutils
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install lxml jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py -F --add-data plcopen:plcopen --add-data templates:templates
+
+      - name: Verify binary
+        run: |
+          file dist/xml2st
+          dist/xml2st --version || true
+
+      - name: Package artifact
+        run: |
+          mkdir -p staging/xml2st
+          cp dist/xml2st staging/xml2st/
+          tar -czf xml2st-linux-x64.tar.gz -C staging xml2st
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-linux-x64
+          path: xml2st-linux-x64.tar.gz
+
+  build-linux-arm64:
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up linux environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip python3-venv binutils
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install lxml jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py -F --add-data plcopen:plcopen --add-data templates:templates
+
+      - name: Verify binary
+        run: |
+          file dist/xml2st
+          dist/xml2st --version || true
+
+      - name: Package artifact
+        run: |
+          mkdir -p staging/xml2st
+          cp dist/xml2st staging/xml2st/
+          tar -czf xml2st-linux-arm64.tar.gz -C staging xml2st
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-linux-arm64
+          path: xml2st-linux-arm64.tar.gz
+
+  build-darwin-arm64:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install brew python
+        run: |
+          brew install python@3.13
+          echo "$(brew --prefix python@3.13)/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: pip3 install lxml jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i '' "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller (directory mode)
+        run: pyinstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
+
+      - name: Verify binary
+        run: |
+          file dist/xml2st/xml2st
+          dist/xml2st/xml2st --version || true
+
+      - name: Package artifact
+        run: tar -czf xml2st-darwin-arm64.tar.gz -C dist xml2st
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-darwin-arm64
+          path: xml2st-darwin-arm64.tar.gz
+
+  build-darwin-x64:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install x86_64 Homebrew via Rosetta
+        run: |
+          arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+      - name: Install x86_64 python
+        run: arch -x86_64 /usr/local/bin/brew install python@3.13
+
+      - name: Install dependencies
+        run: |
+          X86_PYTHON="/usr/local/opt/python@3.13/bin/python3"
+          arch -x86_64 $X86_PYTHON -m pip install lxml jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i '' "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller (directory mode)
+        run: |
+          X86_PYTHON="/usr/local/opt/python@3.13/bin/python3"
+          arch -x86_64 $X86_PYTHON -m PyInstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
+
+      - name: Verify binary
+        run: |
+          file dist/xml2st/xml2st
+          arch -x86_64 dist/xml2st/xml2st --version || true
+
+      - name: Package artifact
+        run: tar -czf xml2st-darwin-x64.tar.gz -C dist xml2st
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-darwin-x64
+          path: xml2st-darwin-x64.tar.gz
+
+  build-windows-x64:
+    runs-on: windows-2025
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install lxml jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py -F --add-data "plcopen;plcopen" --add-data "templates;templates"
+
+      - name: Verify binary
+        run: dist\xml2st.exe --version
+
+      - name: Package artifact
+        run: |
+          New-Item -ItemType Directory -Path staging\xml2st
+          Copy-Item dist\xml2st.exe staging\xml2st\
+          Compress-Archive -Path staging\xml2st -DestinationPath xml2st-win32-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-win32-x64
+          path: xml2st-win32-x64.zip
+
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install lxml==5.0.0 jinja2 pyinstaller
+
+      - name: Inject version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller xml2st.py -F --add-data "plcopen;plcopen" --add-data "templates;templates"
+
+      - name: Verify binary
+        run: dist\xml2st.exe --version
+
+      - name: Package artifact
+        run: |
+          New-Item -ItemType Directory -Path staging\xml2st
+          Copy-Item dist\xml2st.exe staging\xml2st\
+          Compress-Archive -Path staging\xml2st -DestinationPath xml2st-win32-arm64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xml2st-win32-arm64
+          path: xml2st-win32-arm64.zip
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-linux-x64
+      - build-linux-arm64
+      - build-darwin-arm64
+      - build-darwin-x64
+      - build-windows-x64
+      - build-windows-arm64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Detect prerelease
+        id: prerelease
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$TAG" =~ (alpha|beta|rc) ]]; then
+            echo "flag=--prerelease" >> $GITHUB_OUTPUT
+          else
+            echo "flag=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --generate-notes \
+            ${{ steps.prerelease.outputs.flag }} \
+            artifacts/xml2st-linux-x64/xml2st-linux-x64.tar.gz \
+            artifacts/xml2st-linux-arm64/xml2st-linux-arm64.tar.gz \
+            artifacts/xml2st-darwin-arm64/xml2st-darwin-arm64.tar.gz \
+            artifacts/xml2st-darwin-x64/xml2st-darwin-x64.tar.gz \
+            artifacts/xml2st-win32-x64/xml2st-win32-x64.zip \
+            artifacts/xml2st-win32-arm64/xml2st-win32-arm64.zip
