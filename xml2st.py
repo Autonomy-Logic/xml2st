@@ -1,3 +1,5 @@
+__version__ = "0.1-dev"
+
 import argparse
 import os
 import sys
@@ -118,6 +120,9 @@ def generate_gluevars(located_vars_file):
 def main():
     parser = argparse.ArgumentParser(
         description="Process a PLCopen XML file and transpiles it into a Structured Text (ST) program."
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"xml2st {__version__}"
     )
     parser.add_argument(
         "--generate-st", metavar=("XML_FILE"), type=str, help="The path to the XML file"
