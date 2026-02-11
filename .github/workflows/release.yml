@@ -115,7 +115,7 @@ jobs:
 
       - name: Set up venv and install dependencies
         run: |
-          "$(brew --prefix python@3.13)/bin/python3" -m venv .venv
+          "$(brew --prefix python@3.13)/bin/python3.13" -m venv .venv
           .venv/bin/pip install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
@@ -156,11 +156,11 @@ jobs:
           # Link failure is expected (runner has Python.framework symlinks in /usr/local/bin)
           # We use explicit Cellar paths so linking is not needed
           arch -x86_64 /usr/local/bin/brew install python@3.13 || true
-          test -f /usr/local/opt/python@3.13/bin/python3
+          test -f /usr/local/opt/python@3.13/bin/python3.13
 
       - name: Set up venv and install dependencies
         run: |
-          X86_PYTHON="/usr/local/opt/python@3.13/bin/python3"
+          X86_PYTHON="/usr/local/opt/python@3.13/bin/python3.13"
           arch -x86_64 $X86_PYTHON -m venv .venv
           arch -x86_64 .venv/bin/pip install lxml jinja2 pyserial pyinstaller
 
