@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lxml jinja2 pyinstaller
+          pip3 install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -76,7 +76,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lxml jinja2 pyinstaller
+          pip3 install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -111,12 +111,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install brew python
-        run: |
-          brew install python@3.13
-          echo "$(brew --prefix python@3.13)/bin" >> $GITHUB_PATH
+        run: brew install python@3.13
 
-      - name: Install dependencies
-        run: pip3 install lxml jinja2 pyinstaller
+      - name: Set up venv and install dependencies
+        run: |
+          "$(brew --prefix python@3.13)/bin/python3" -m venv .venv
+          .venv/bin/pip install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -125,7 +125,7 @@ jobs:
           sed -i '' "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
 
       - name: Build with PyInstaller (directory mode)
-        run: pyinstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
+        run: .venv/bin/pyinstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
 
       - name: Verify binary
         run: |
@@ -152,12 +152,17 @@ jobs:
           arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
       - name: Install x86_64 python
-        run: arch -x86_64 /usr/local/bin/brew install python@3.13
+        run: |
+          # Link failure is expected (runner has Python.framework symlinks in /usr/local/bin)
+          # We use explicit Cellar paths so linking is not needed
+          arch -x86_64 /usr/local/bin/brew install python@3.13 || true
+          test -f /usr/local/opt/python@3.13/bin/python3
 
-      - name: Install dependencies
+      - name: Set up venv and install dependencies
         run: |
           X86_PYTHON="/usr/local/opt/python@3.13/bin/python3"
-          arch -x86_64 $X86_PYTHON -m pip install lxml jinja2 pyinstaller
+          arch -x86_64 $X86_PYTHON -m venv .venv
+          arch -x86_64 .venv/bin/pip install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -166,9 +171,7 @@ jobs:
           sed -i '' "s/__version__ = \"0.1-dev\"/__version__ = \"$VERSION\"/" xml2st.py
 
       - name: Build with PyInstaller (directory mode)
-        run: |
-          X86_PYTHON="/usr/local/opt/python@3.13/bin/python3"
-          arch -x86_64 $X86_PYTHON -m PyInstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
+        run: arch -x86_64 .venv/bin/pyinstaller xml2st.py --add-data plcopen:plcopen --add-data templates:templates
 
       - name: Verify binary
         run: |
@@ -198,7 +201,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install lxml jinja2 pyinstaller
+          pip install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -239,7 +242,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install lxml==5.0.0 jinja2 pyinstaller
+          pip install lxml jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
