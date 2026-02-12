@@ -1,4 +1,4 @@
-import traceback, os
+import traceback, os, re
 from jinja2 import Environment, FileSystemLoader
 from runtime.typemapping import DebugTypesSize
 import util.paths as paths
@@ -80,7 +80,7 @@ class ProjectController:
 
                 # second section contains all variables
                 config_FBs = {}
-                # Track global array variables: {parent_c_path: {element_type, count}}
+                # Track global array variables: {parent_c_path: {element_type, dim_max: [max_idx_per_dim]}}
                 config_arrays = {}
                 # Track global variable names (defined at CONFIG0 level) to detect external references
                 global_var_names = set()
@@ -119,12 +119,20 @@ class ProjectController:
                                 # Global array or struct access - keep CONFIG prefix
                                 attrs["C_path"] = parts[0] + "__" + parts[1] + "." + parts[2]
                                 # Track global array variables for extern declarations
-                                # Pattern: value.table[x] indicates array element
+                                # Pattern: value.table[x] or value.table[x][y]... indicates array element
                                 if parts[2].startswith("value.table["):
                                     parent_c_path = parts[0] + "__" + parts[1]
+                                    # Extract per-dimension indices from subscripts like "value.table[1][2]"
+                                    indices = [int(m) for m in re.findall(r'\[(\d+)\]', parts[2])]
                                     if parent_c_path not in config_arrays:
-                                        config_arrays[parent_c_path] = {"element_type": attrs["type"], "count": 0}
-                                    config_arrays[parent_c_path]["count"] += 1
+                                        config_arrays[parent_c_path] = {
+                                            "element_type": attrs["type"],
+                                            "dim_max": [0] * len(indices),
+                                        }
+                                    # Track maximum index seen in each dimension
+                                    for d, idx in enumerate(indices):
+                                        if idx > config_arrays[parent_c_path]["dim_max"][d]:
+                                            config_arrays[parent_c_path]["dim_max"][d] = idx
                             else:
                                 # For resource-level variables (RES0.INSTANCE.xxx)
                                 # Check if this is an external variable reference (references a global)
@@ -155,8 +163,12 @@ class ProjectController:
                 # Add synthetic entries for global array variables to _VariablesList
                 # These are needed to generate extern declarations
                 # Use vartype "GLOBAL_ARRAY" to use the correct extern format (no __IEC_ prefix)
+                # Type name uses per-dimension sizes to match matiec's naming convention
+                # e.g. ARRAY [0..2, 0..2] OF INT -> __ARRAY_OF_INT_3_3 (not __ARRAY_OF_INT_9)
                 for parent_c_path, info in config_arrays.items():
-                    array_type = f"__ARRAY_OF_{info['element_type']}_{info['count']}"
+                    dim_sizes = [str(m + 1) for m in info["dim_max"]]
+                    dim_suffix = "_".join(dim_sizes)
+                    array_type = f"__ARRAY_OF_{info['element_type']}_{dim_suffix}"
                     self._VariablesList.append({
                         "C_path": parent_c_path,
                         "type": array_type,
