@@ -729,6 +729,39 @@ class PouProgramGenerator(object):
     def GetBlockType(self, type, inputs=None):
         return self.ParentGenerator.Controler.GetBlockType(type, inputs)
 
+    def SynthesizePermissiveBlockInfos(self, instance):
+        # Build a best-effort `block_infos` from the call-site XML when
+        # the project / standard libraries don't know this block.
+        #
+        # xml2st is downstream of strucpp's library system: blocks from
+        # user-installed .stlib archives are never registered with
+        # xml2st, so any FBD/LD reference to them used to raise
+        # `No informations found for "X" block`.  We instead produce a
+        # permissive shape with `ANY` types so xml2st keeps generating
+        # ST; strucpp does the real type checking afterwards against
+        # the library's actual signature.
+        #
+        # FB vs function is inferred from the presence of
+        # `instanceName` (FBs always carry one in PLCopen XML).
+        is_fb = bool(instance.getinstanceName())
+        return {
+            "name": instance.gettypeName(),
+            "type": "functionBlock" if is_fb else "function",
+            "extensible": False,
+            "inputs": [
+                (v.getformalParameter(), "ANY", "none")
+                for v in instance.inputVariables.getvariable()
+                if v.getformalParameter() != "EN"
+            ],
+            "outputs": [
+                (v.getformalParameter(), "ANY", "none")
+                for v in instance.outputVariables.getvariable()
+                if v.getformalParameter() != "ENO"
+            ],
+            "comment": "",
+            "usage": "",
+        }
+
     def IndentLeft(self):
         if len(self.CurrentIndent) >= 2:
             self.CurrentIndent = self.CurrentIndent[:-2]
@@ -1124,13 +1157,13 @@ class PouProgramGenerator(object):
                         ]
                     ),
                 )
-                if block_infos is not None:
-                    self.ComputeBlockInputTypes(instance, block_infos, body)
-                else:
-                    raise PLCGenException(
-                        'No informations found for "%s" block'
-                        % (instance.gettypeName())
-                    )
+                if block_infos is None:
+                    # Unknown block (e.g. user-installed .stlib block):
+                    # synthesize a permissive signature so type
+                    # inference can continue.  strucpp will type-check
+                    # against the real library signature downstream.
+                    block_infos = self.SynthesizePermissiveBlockInfos(instance)
+                self.ComputeBlockInputTypes(instance, block_infos, body)
             if body_type == "SFC":
                 previous_tagname = self.TagName
                 for action in pou.getactionList():
@@ -1364,11 +1397,7 @@ class PouProgramGenerator(object):
                     if block_infos is None:
                         block_infos = self.GetBlockType(block_type)
                     if block_infos is None:
-                        raise PLCGenException(
-                            'Undefined block type "{a1}" in "{a2}" POU'.format(
-                                a1=block_type, a2=self.Name
-                            )
-                        )
+                        block_infos = self.SynthesizePermissiveBlockInfos(instance)
                     try:
                         self.GenerateBlock(instance, block_infos, body, None)
                     except ValueError as e:
@@ -1809,11 +1838,7 @@ class PouProgramGenerator(object):
                 if block_infos is None:
                     block_infos = self.GetBlockType(block_type)
                 if block_infos is None:
-                    raise PLCGenException(
-                        'Undefined block type "{a1}" in "{a2}" POU'.format(
-                            a1=block_type, a2=self.Name
-                        )
-                    )
+                    block_infos = self.SynthesizePermissiveBlockInfos(next)
                 try:
                     paths.append(
                         str(
