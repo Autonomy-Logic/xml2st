@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lxml jinja2 pyserial pyinstaller
+          pip3 install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -76,7 +76,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lxml jinja2 pyserial pyinstaller
+          pip3 install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -116,7 +116,7 @@ jobs:
       - name: Set up venv and install dependencies
         run: |
           "$(brew --prefix python@3.13)/bin/python3.13" -m venv .venv
-          .venv/bin/pip install lxml jinja2 pyserial pyinstaller
+          .venv/bin/pip install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -162,7 +162,7 @@ jobs:
         run: |
           X86_PYTHON="/usr/local/opt/python@3.13/bin/python3.13"
           arch -x86_64 $X86_PYTHON -m venv .venv
-          arch -x86_64 .venv/bin/pip install lxml jinja2 pyserial pyinstaller
+          arch -x86_64 .venv/bin/pip install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -201,7 +201,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install lxml jinja2 pyserial pyinstaller
+          pip install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
@@ -242,7 +242,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install lxml jinja2 pyserial pyinstaller
+          pip install 'lxml<6.1.1' jinja2 pyserial pyinstaller
 
       - name: Inject version
         if: startsWith(github.ref, 'refs/tags/')
