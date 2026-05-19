@@ -139,6 +139,10 @@ class ComplexParser:
         self.complex_types = []
         self.complex_structs = []
         self.function_blocks = []
+        # See `RewriteST` for the meaning of this flag; tracked here so
+        # `__getSTLines` and helpers can branch on it without changing
+        # every method signature.
+        self.__keep_structs = False
         self.__loader = FileSystemLoader(
             os.path.join(paths.AbsDir(__file__), "templates")
         )
@@ -220,7 +224,13 @@ class ComplexParser:
             return []
         for line in block.lines:
             if isinstance(line, _InsertLine):
-                lines.extend(self.__getBlockLines(block.inner_blocks[line.index]))
+                # Thread the flag through recursion — without this, walking
+                # a TYPE block with ignoreComplexStructs=False still drops
+                # the struct content because the inner recursive call would
+                # default back to True and short-circuit at line 219.
+                lines.extend(
+                    self.__getBlockLines(block.inner_blocks[line.index], ignoreComplexStructs)
+                )
             else:
                 lines.append(line)
 
@@ -283,11 +293,22 @@ class ComplexParser:
         lines = []
         for block in [b for b in self.blocks]:
             if block.type == TYPE.name:
-                type_lines = self.__getBlockLines(block)
+                # `keep_structs` flips between matiec's legacy struct-as-FB
+                # rewrite (default, for backward compatibility) and the
+                # native TYPE/STRUCT/END_STRUCT emission strucpp expects.
+                # In native mode the struct content stays inside the TYPE
+                # block as the original parser produced it; in legacy mode
+                # the struct is hoisted into a synthesized FUNCTION_BLOCK
+                # before the TYPE block so matiec resolves the FB-as-struct
+                # reference downstream.
+                type_lines = self.__getBlockLines(
+                    block, ignoreComplexStructs=not self.__keep_structs
+                )
                 non_empty_lines = [l for l in type_lines if l.strip() and l.strip() not in ['TYPE', 'END_TYPE']]
-                # Emit FUNCTION_BLOCKs before TYPE so matiec's parser has FB names
-                # registered before encountering ARRAY OF <fb_name> in the TYPE block.
-                lines.append(self.__rewriteStructsAsFunctionBlocks())
+                if not self.__keep_structs:
+                    # Emit FUNCTION_BLOCKs before TYPE so matiec's parser has FB names
+                    # registered before encountering ARRAY OF <fb_name> in the TYPE block.
+                    lines.append(self.__rewriteStructsAsFunctionBlocks())
                 if len(non_empty_lines) > 0:
                     lines.extend(type_lines)
             else:
@@ -317,14 +338,28 @@ class ComplexParser:
 
     ## PUBLIC METHODS
 
-    def RewriteST(self, st_file):
+    def RewriteST(self, st_file, keep_structs=False):
         """
         Rewrite the ST file with complex variables.
+
+        When `keep_structs` is False (default, legacy matiec mode), every
+        user-defined STRUCT is hoisted out of its TYPE block and emitted
+        as a synthesised FUNCTION_BLOCK ahead of any other TYPE content —
+        matiec's parser couldn't handle native STRUCT declarations in
+        certain contexts and we worked around it by treating structs as
+        single-field FBs.
+
+        When `keep_structs` is True (strucpp mode), structs stay inside
+        the TYPE block as native `TYPE name : STRUCT … END_STRUCT;
+        END_TYPE` declarations.  Strucpp parses these directly and would
+        otherwise reject the synthesised FUNCTION_BLOCK wrapper as a
+        type-vs-instance mismatch.
         """
         if not st_file or not os.path.isfile(st_file):
             raise Exception("ST file not valid. Please provide a valid ST file path.")
 
         self.__clear()
+        self.__keep_structs = keep_structs
 
         self.__stFile = st_file
         self._parseStTree()
