@@ -143,6 +143,17 @@ def main():
     parser.add_argument(
         "--list-ports", action="store_true", help="List all available serial ports"
     )
+    parser.add_argument(
+        "--keep-structs",
+        action="store_true",
+        help=(
+            "Emit user-defined STRUCT data types as native TYPE/STRUCT/END_STRUCT "
+            "declarations instead of rewriting them as FUNCTION_BLOCKs.  Required "
+            "for strucpp targets; the FUNCTION_BLOCK rewrite is a legacy workaround "
+            "for matiec's STRUCT-parsing limitations and remains the default for "
+            "backward compatibility."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -163,7 +174,7 @@ def main():
             print("Parsing complex variables...")
 
             complex_parser = ComplexParser()
-            complex_parser.RewriteST(st_file)
+            complex_parser.RewriteST(st_file, keep_structs=args.keep_structs)
 
         except Exception as e:
             print(f"Error generating ST file: {e}", file=sys.stderr)
