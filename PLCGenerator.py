@@ -1566,7 +1566,7 @@ class PouProgramGenerator(object):
                     vars = [name + value for name, value in connected_vars]
                 else:
                     vars = [value for name, value in connected_vars]
-                if one_input_connected:
+                if one_input_connected or len(input_names) == 0:
                     for i, variable in enumerate(output_variables):
                         parameter = variable.getformalParameter()
                         if (
