@@ -6,6 +6,7 @@ import sys
 import json
 import plcopen.plcopen as plcopen
 import PLCGenerator
+from plcopen.library_blocks import extract_library_blocks
 from PLCControler import PLCControler
 from ProjectController import ProjectController
 from ComplexParser import ComplexParser
@@ -46,6 +47,17 @@ def compile_xml_to_st(xml_file_path):
     if project_tree is None or len(project_tree) < 2:
         print("Error: Failed to load XML project file.", file=sys.stderr)
         return
+
+    # Register any block signatures the upstream tool embedded in the
+    # project XML (library-blocks payload).  This is how xml2st learns the
+    # types of library functions/FBs without bundling a library of its own.
+    library_blocks = extract_library_blocks(file_name)
+    if library_blocks:
+        controler.RegisterLibraryBlocks(library_blocks)
+        print(
+            f"Registered {len(library_blocks)} library block "
+            f"definition(s) from project XML"
+        )
 
     project = project_tree[0]
     errors = []
