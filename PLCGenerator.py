@@ -1020,10 +1020,14 @@ class PouProgramGenerator(object):
                             connected = self.GetConnectedConnector(
                                 instance.connectionPointIn, body
                             )
-                            if (
-                                connected is not None
-                                and connected not in self.ConnectionTypes
-                            ):
+                            # A declared variable wired to a block output is
+                            # authoritative for that output's type — override
+                            # the block definition's nominal type (e.g. ADR
+                            # defined as ULINT but wired to a POINTER TO INT
+                            # variable).  This applies only when the sink is a
+                            # real variable; block outputs feeding other block
+                            # input pins keep their definition type.
+                            if connected is not None:
                                 for related in self.ExtractRelatedConnections(
                                     connected
                                 ):
@@ -1127,33 +1131,25 @@ class PouProgramGenerator(object):
                         )
 
                 elif isinstance(instance, BlockClass):
-                    # Resolve each input pin from its connected source, then
-                    # defer the block's definition-based typing to the
-                    # post-loop pass below.  Deferring lets a type coming from
-                    # a connected variable (assigned while iterating the
-                    # variable instances above) take precedence over the
-                    # block definition's nominal pin type — e.g. ADR's output
-                    # adopts the connected `POINTER TO INT` sink instead of
-                    # the definition's `ULINT`, and a generic `ANY_NUM` output
-                    # adopts its connected variable's concrete type.  The block
-                    # definition is still applied for any pin with no connected
-                    # variable type (e.g. a nullary CURRENT_DT whose output is
-                    # unconnected falls back to the definition's `DT`).
-                    for variable in instance.inputVariables.getvariable():
-                        connected = self.GetConnectedConnector(
-                            variable.connectionPointIn, body
-                        )
-                        if connected is not None:
-                            var_type = self.ConnectionTypes.get(connected, None)
-                            if var_type is not None:
-                                self.ConnectionTypes[variable.connectionPointIn] = (
-                                    var_type
-                                )
-                            else:
-                                related = self.ExtractRelatedConnections(connected)
-                                related.append(variable.connectionPointIn)
-                                self.RelatedConnections.append(related)
-                    undefined_blocks.append(instance)
+                    block_infos = self.GetBlockType(instance.gettypeName(), "undefined")
+                    if block_infos is not None:
+                        self.ComputeBlockInputTypes(instance, block_infos, body)
+                    else:
+                        for variable in instance.inputVariables.getvariable():
+                            connected = self.GetConnectedConnector(
+                                variable.connectionPointIn, body
+                            )
+                            if connected is not None:
+                                var_type = self.ConnectionTypes.get(connected, None)
+                                if var_type is not None:
+                                    self.ConnectionTypes[variable.connectionPointIn] = (
+                                        var_type
+                                    )
+                                else:
+                                    related = self.ExtractRelatedConnections(connected)
+                                    related.append(variable.connectionPointIn)
+                                    self.RelatedConnections.append(related)
+                        undefined_blocks.append(instance)
             for instance in undefined_blocks:
                 block_infos = self.GetBlockType(
                     instance.gettypeName(),
