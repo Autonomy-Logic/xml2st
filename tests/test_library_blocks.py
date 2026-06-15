@@ -83,3 +83,15 @@ def test_e2e_variadic_keeps_all_inputs_and_resolves_type():
     assert st is not None
     assert "_TMP_SUMN9000_OUT : INT;" in st
     assert "SUMN(a, b, c)" in st
+
+
+def test_e2e_connected_sink_type_wins_over_definition():
+    """A connected variable's type takes precedence over the embedded block
+    definition's nominal return type.  MK_PTR is defined as returning ULINT,
+    but its output is wired to a `POINTER TO INT` variable, so the temp must
+    adopt POINTER TO INT (regression: ADR was emitting ULINT and breaking the
+    downstream pointer assignment)."""
+    st = _compile(os.path.join(FIXTURES, "output_sink_precedence.xml"))
+    assert st is not None
+    assert "_TMP_MK_PTR8000_OUT : POINTER TO INT;" in st
+    assert "_TMP_MK_PTR8000_OUT : ULINT;" not in st
