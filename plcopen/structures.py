@@ -25,9 +25,7 @@
 
 import re
 from collections import OrderedDict
-from functools import reduce
 
-from .plcopen import LoadProject
 from .definitions import *
 
 TypeHierarchy = dict(TypeHierarchy_list)
@@ -77,11 +75,14 @@ Inputs and outputs are a tuple of characteristics that are in order:
     - The default modifier which can be "none", "negated", "rising" or "falling"
 """
 
-StdBlckLibs = {libname: LoadProject(tc6fname)[0] for libname, tc6fname in StdTC6Libs}
-StdBlckLst = [
-    {"name": libname, "list": [GetBlockInfos(pous) for pous in lib.getpous()]}
-    for libname, lib in StdBlckLibs.items()
-]
+# xml2st no longer bundles a block library.  It is library-agnostic: the
+# signatures of every block a project uses are embedded in the project's
+# PLCopen XML (see plcopen/library_blocks.py) and registered per-compile via
+# PLCControler.RegisterLibraryBlocks.  Any block still unknown at generation
+# time degrades to PLCGenerator.SynthesizePermissiveBlockInfos.  These names
+# are kept (empty) because other modules import them.
+StdBlckLibs = {}
+StdBlckLst = []
 
 # -------------------------------------------------------------------------------
 #                             Test identifier
@@ -100,212 +101,6 @@ def TestIdentifier(identifier):
     return IDENTIFIER_MODEL.match(identifier) is not None
 
 
-# -------------------------------------------------------------------------------
-#                        Standard functions list generation
-# -------------------------------------------------------------------------------
-
-
-def csv_file_to_table(file):
-    """
-    take a .csv file and translate it it a "csv_table"
-    """
-    table = [
-        [column.strip() for column in line.split(";")] for line in file.readlines()
-    ]
-    return table
-
-
-def find_section(section_name, table):
-    """
-    seek into the csv table to a section ( section_name match 1st field )
-    return the matching row without first field
-    """
-    fields = [None]
-    while fields[0] != section_name:
-        fields = table.pop(0)
-    return fields[1:]
-
-
-def get_standard_funtions_input_variables(table):
-    """
-    extract the standard functions standard parameter names and types...
-    return a { ParameterName: Type, ...}
-    """
-    variables = find_section("Standard_functions_variables_types", table)
-    standard_funtions_input_variables = {}
-    fields = [True, True]
-    while fields[1]:
-        fields = table.pop(0)
-        variable_from_csv = dict(
-            [(champ, val) for champ, val in zip(variables, fields[1:]) if champ != ""]
-        )
-        standard_funtions_input_variables[variable_from_csv["name"]] = (
-            variable_from_csv["type"]
-        )
-    return standard_funtions_input_variables
-
-
-def csv_input_translate(str_decl, variables, base):
-    """
-    translate .csv file input declaration into PLCOpenEditor interessting values
-    in : "(ANY_NUM, ANY_NUM)" and { ParameterName: Type, ...}
-    return [("IN1","ANY_NUM","none"),("IN2","ANY_NUM","none")]
-    """
-    decl = str_decl.replace("(", "").replace(")", "").replace(" ", "").split(",")
-    params = []
-
-    len_of_not_predifined_variable = len(
-        [True for param_type in decl if param_type not in variables]
-    )
-
-    for param_type in decl:
-        if param_type in list(variables.keys()):
-            param_name = param_type
-            param_type = variables[param_type]
-        elif len_of_not_predifined_variable > 1:
-            param_name = "IN%d" % base
-            base += 1
-        else:
-            param_name = "IN"
-        params.append((param_name, param_type, "none"))
-    return params
-
-
-def get_standard_funtions(table):
-    """
-    Returns this kind of declaration for all standard functions
-
-            [{"name" : "Numerical", 'list': [   {
-                'baseinputnumber': 1,
-                'comment': 'Addition',
-                'extensible': True,
-                'inputs': [   ('IN1', 'ANY_NUM', 'none'),
-                              ('IN2', 'ANY_NUM', 'none')],
-                'name': 'ADD',
-                'outputs': [('OUT', 'ANY_NUM', 'none')],
-                'type': 'function'}, ...... ] },.....]
-    """
-
-    variables = get_standard_funtions_input_variables(table)
-
-    fonctions = find_section("Standard_functions_type", table)
-
-    Standard_Functions_Decl = []
-    Current_section = None
-
-    translate = {
-        "extensible": lambda x: {"yes": True, "no": False}[x],
-        "inputs": lambda x: csv_input_translate(x, variables, baseinputnumber),
-        "outputs": lambda x: [("OUT", x, "none")],
-    }
-
-    for fields in table:
-        if fields[1]:
-            # If function section name given
-            if fields[0]:
-                words = fields[0].split('"')
-                if len(words) > 1:
-                    section_name = words[1]
-                else:
-                    section_name = fields[0]
-                Current_section = {"name": section_name, "list": []}
-                Standard_Functions_Decl.append(Current_section)
-            if Current_section:
-                Function_decl = dict(
-                    [(champ, val) for champ, val in zip(fonctions, fields[1:]) if champ]
-                )
-                baseinputnumber = int(Function_decl.get("baseinputnumber", 1))
-                Function_decl["baseinputnumber"] = baseinputnumber
-                for param, value in Function_decl.items():
-                    if param in translate:
-                        Function_decl[param] = translate[param](value)
-                Function_decl["type"] = "function"
-
-                if Function_decl["name"].startswith("*") or Function_decl[
-                    "name"
-                ].endswith("*"):
-                    input_ovrloading_types = GetSubTypes(Function_decl["inputs"][0][1])
-                    output_types = GetSubTypes(Function_decl["outputs"][0][1])
-                else:
-                    input_ovrloading_types = [None]
-                    output_types = [None]
-
-                funcdeclname_orig = Function_decl["name"]
-                funcdeclname = Function_decl["name"].strip("*_")
-                fdc = Function_decl["inputs"][:]
-                for intype in input_ovrloading_types:
-                    if intype is not None:
-                        Function_decl["inputs"] = []
-                        for decl_tpl in fdc:
-                            if IsOfType(intype, decl_tpl[1]):
-                                Function_decl["inputs"] += [
-                                    (decl_tpl[0], intype, decl_tpl[2])
-                                ]
-                            else:
-                                Function_decl["inputs"] += [decl_tpl]
-
-                            if funcdeclname_orig.startswith("*"):
-                                funcdeclin = intype + "_" + funcdeclname
-                            else:
-                                funcdeclin = funcdeclname
-                    else:
-                        funcdeclin = funcdeclname
-
-                    for outype in output_types:
-                        if outype is not None:
-                            decl_tpl = Function_decl["outputs"][0]
-                            Function_decl["outputs"] = [
-                                (decl_tpl[0], outype, decl_tpl[2])
-                            ]
-                            if funcdeclname_orig.endswith("*"):
-                                funcdeclout = funcdeclin + "_" + outype
-                            else:
-                                funcdeclout = funcdeclin
-                        else:
-                            funcdeclout = funcdeclin
-                        Function_decl["name"] = funcdeclout
-
-                        # apply filter given in "filter" column
-                        filter_name = Function_decl["filter"]
-                        store = True
-                        for InTypes, OutTypes in ANY_TO_ANY_FILTERS.get(
-                            filter_name, []
-                        ):
-                            outs = reduce(
-                                lambda a, b: a or b,
-                                [
-                                    IsOfType(Function_decl["outputs"][0][1], testtype)
-                                    for testtype in OutTypes
-                                ],
-                            )
-                            inps = reduce(
-                                lambda a, b: a or b,
-                                [
-                                    IsOfType(Function_decl["inputs"][0][1], testtype)
-                                    for testtype in InTypes
-                                ],
-                            )
-                            if (
-                                inps
-                                and outs
-                                and Function_decl["outputs"][0][1]
-                                != Function_decl["inputs"][0][1]
-                            ):
-                                store = True
-                                break
-                            else:
-                                store = False
-                        if store:
-                            # create the copy of decl dict to be appended to section
-                            Function_decl_copy = Function_decl.copy()
-                            Current_section["list"].append(Function_decl_copy)
-            else:
-                raise ValueError("First function must be in a category")
-
-    return Standard_Functions_Decl
-
-
-StdBlckLst.extend(get_standard_funtions(csv_file_to_table(open(StdFuncsCSV))))
 
 # Dictionary to speedup block type fetching by name
 StdBlckDct = OrderedDict()

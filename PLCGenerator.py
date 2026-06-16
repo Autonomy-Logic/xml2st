@@ -1020,6 +1020,16 @@ class PouProgramGenerator(object):
                             connected = self.GetConnectedConnector(
                                 instance.connectionPointIn, body
                             )
+                            # Only propagate the sink variable's type to the
+                            # source connector when that connector is not yet
+                            # typed. A block output that already carries its
+                            # definition's type (e.g. ADR -> __XWORD) stays
+                            # authoritative — strucpp resolves __XWORD/pointer
+                            # conversions, so we no longer override a block's
+                            # nominal output type with the wired variable's
+                            # type. This avoids unrelated connections (e.g. a
+                            # TIME timer pin) contaminating a concrete-return
+                            # function's output temp.
                             if (
                                 connected is not None
                                 and connected not in self.ConnectionTypes
