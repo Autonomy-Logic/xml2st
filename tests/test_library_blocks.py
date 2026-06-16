@@ -85,13 +85,15 @@ def test_e2e_variadic_keeps_all_inputs_and_resolves_type():
     assert "SUMN(a, b, c)" in st
 
 
-def test_e2e_connected_sink_type_wins_over_definition():
-    """A connected variable's type takes precedence over the embedded block
-    definition's nominal return type.  MK_PTR is defined as returning ULINT,
-    but its output is wired to a `POINTER TO INT` variable, so the temp must
-    adopt POINTER TO INT (regression: ADR was emitting ULINT and breaking the
-    downstream pointer assignment)."""
+def test_e2e_block_definition_type_is_authoritative_for_output_temp():
+    """An embedded block definition is authoritative for its output temp's
+    type, even when the output is wired to a variable of a different type.
+    MK_PTR is defined as returning __XWORD (the platform-width address type,
+    as ADR/REF_LINK do); its output is wired to a `POINTER TO INT` variable.
+    The temp keeps __XWORD — strucpp resolves the __XWORD->pointer assignment.
+    This is the inverse of the earlier (removed) variable-wins precedence rule,
+    which let unrelated connections contaminate concrete-return temps."""
     st = _compile(os.path.join(FIXTURES, "output_sink_precedence.xml"))
     assert st is not None
-    assert "_TMP_MK_PTR8000_OUT : POINTER TO INT;" in st
-    assert "_TMP_MK_PTR8000_OUT : ULINT;" not in st
+    assert "_TMP_MK_PTR8000_OUT : __XWORD;" in st
+    assert "_TMP_MK_PTR8000_OUT : POINTER TO INT;" not in st

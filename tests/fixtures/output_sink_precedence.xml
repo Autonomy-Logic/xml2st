@@ -32,4 +32,4 @@
       </configuration>
     </configurations>
   </instances>
-<addData><data name="openplc.org/xml2st/library-blocks" handleUnknown="discard"><libraryBlocks><pou name="MK_PTR" pouType="function"><interface><returnType><ULINT/></returnType><inputVars><variable name="IN"><type><ANY/></type></variable></inputVars></interface></pou></libraryBlocks></data></addData></project>
+<addData><data name="openplc.org/xml2st/library-blocks" handleUnknown="discard"><libraryBlocks><pou name="MK_PTR" pouType="function"><interface><returnType><__XWORD/></returnType><inputVars><variable name="IN"><type><ANY/></type></variable></inputVars></interface></pou></libraryBlocks></data></addData></project>

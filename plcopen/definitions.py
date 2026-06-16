@@ -78,6 +78,11 @@ TypeHierarchy_list = [
     ("WORD", "ANY_NBIT"),
     ("DWORD", "ANY_NBIT"),
     ("LWORD", "ANY_NBIT"),
+    # __XWORD: platform-width address type (CODESYS parity). Treated as a
+    # bit-string so block definitions can type pointer-returning temps
+    # (e.g. ADR()/REF_LINK() _TMP outputs) as __XWORD; strucpp resolves the
+    # concrete width per target. See strucpp iec-types-data.ts / type-utils.ts.
+    ("__XWORD", "ANY_NBIT"),
     # ("WSTRING", "ANY_STRING") # TODO
 ]
 
