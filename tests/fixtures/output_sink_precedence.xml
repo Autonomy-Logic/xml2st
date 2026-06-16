@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0201" xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:ns1="http://www.plcopen.org/xml/tc6_0201">
+  <fileHeader companyName="Unknown" productName="Unnamed" productVersion="1" creationDateTime="2026-06-15T08:02:50"/>
+  <contentHeader name="Unnamed" modificationDateTime="2026-06-15T08:02:50">
+    <coordinateInfo>
+      <fbd>
+        <scaling x="16" y="16"/>
+      </fbd>
+      <ld>
+        <scaling x="16" y="16"/>
+      </ld>
+      <sfc>
+        <scaling x="16" y="16"/>
+      </sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="PLC_PRG" pouType="program">
+        <interface><localVars><variable name="src"><type><INT/></type></variable><variable name="p"><type><derived name="POINTER TO INT"/></type></variable></localVars></interface><body><FBD><inVariable localId="8001" height="20" width="40"><position x="10" y="10"/><connectionPointOut><relPosition x="40" y="10"/></connectionPointOut><expression>src</expression></inVariable><block localId="8000" typeName="MK_PTR" width="80" height="80" executionOrderId="0"><position x="120" y="10"/><inputVariables><variable formalParameter="IN"><connectionPointIn><relPosition x="0" y="30"/><connection refLocalId="8001"><position x="120" y="40"/><position x="100" y="40"/></connection></connectionPointIn></variable></inputVariables><inOutVariables/><outputVariables><variable formalParameter="OUT"><connectionPointOut><relPosition x="80" y="30"/></connectionPointOut></variable></outputVariables></block><outVariable localId="8010" height="20" width="60"><position x="240" y="10"/><connectionPointIn><relPosition x="0" y="10"/><connection refLocalId="8000" formalParameter="OUT"><position x="240" y="40"/><position x="220" y="40"/></connection></connectionPointIn><expression>p</expression></outVariable></FBD></body></pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations>
+      <configuration name="Config0">
+        <resource name="Res0">
+          <task name="task0" priority="1" interval="T#20ms">
+            <pouInstance name="instance0" typeName="PLC_PRG"/>
+          </task>
+        </resource>
+      </configuration>
+    </configurations>
+  </instances>
+<addData><data name="openplc.org/xml2st/library-blocks" handleUnknown="discard"><libraryBlocks><pou name="MK_PTR" pouType="function"><interface><returnType><__XWORD/></returnType><inputVars><variable name="IN"><type><ANY/></type></variable></inputVars></interface></pou></libraryBlocks></data></addData></project>

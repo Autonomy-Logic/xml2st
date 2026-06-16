@@ -16,4 +16,7 @@ doc/_build/**
 doc/locale/**
 
 C_runtime/**/*.d
-C_runtime/**/*.o
+C_runtime/**/*.o.venv/
+dist/
+*.spec
+__pycache__/

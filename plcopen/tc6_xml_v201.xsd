@@ -720,6 +720,7 @@ Specifies if the processor should try to preserve the additional data element, d
 			<xsd:element name="WORD"/>
 			<xsd:element name="DWORD"/>
 			<xsd:element name="LWORD"/>
+			<xsd:element name="__XWORD"/>
 			<xsd:element name="SINT"/>
 			<xsd:element name="INT"/>
 			<xsd:element name="DINT"/>

@@ -1220,6 +1220,18 @@ class PLCControler(object):
                 BlkLst = self.TotalTypesDict.setdefault(desc["name"], [])
                 BlkLst.append((section["name"], desc))
 
+    # Register block signatures embedded in the project's PLCopen XML
+    # (library-blocks payload).  These let GetBlockType resolve library
+    # functions/FBs the project uses without xml2st bundling any library.
+    def RegisterLibraryBlocks(self, block_infos_list):
+        if not block_infos_list:
+            return
+        section_name = "Project Library Blocks"
+        self.TotalTypes.append({"name": section_name, "list": block_infos_list})
+        for desc in block_infos_list:
+            BlkLst = self.TotalTypesDict.setdefault(desc["name"], [])
+            BlkLst.append((section_name, desc))
+
     # Function that clear the confnode list
     def ClearConfNodeTypes(self):
         self.ConfNodeTypes = []
