@@ -97,3 +97,14 @@ def test_e2e_block_definition_type_is_authoritative_for_output_temp():
     assert st is not None
     assert "_TMP_MK_PTR8000_OUT : __XWORD;" in st
     assert "_TMP_MK_PTR8000_OUT : POINTER TO INT;" not in st
+
+
+def test_e2e_xword_declared_as_variable_type():
+    """__XWORD is a first-class declarable variable type: a localVar declared
+    `<__XWORD/>` passes PLCopen schema validation (the tc6_xml_v201.xsd
+    elementaryTypes group includes it) and emits as `: __XWORD;` in the ST.
+    Users can declare __XWORD on a Function/Function Block as a generic
+    pointer-width type."""
+    st = _compile(os.path.join(FIXTURES, "xword_local_var.xml"))
+    assert st is not None
+    assert "gp : __XWORD;" in st
